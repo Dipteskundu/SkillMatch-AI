@@ -100,8 +100,7 @@ export default function CommunicationIntroPage() {
               {[
                 "Your communication readiness will be permanently recorded",
                 "You receive a ✔ Communication Verified badge on your profile",
-                "You can now apply to any job on JobMatch AI",
-                "Valid for 180 days before re-verification is needed",
+                "You can now apply to any job on SkillMatch AI",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3 text-sm text-emerald-800">
                   <span className="mt-0.5 w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center shrink-0 text-emerald-600 font-black text-xs">✓</span>

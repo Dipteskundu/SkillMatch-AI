@@ -2,11 +2,16 @@
 
 import { AuthProvider } from "./lib/AuthContext";
 import { ThemeProvider } from "./lib/ThemeContext";
+import NotificationSync from "./store/NotificationSync";
 
 export default function Providers({ children }) {
   return (
     <ThemeProvider>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        {/* Single app-wide notifications polling subscription (renders nothing) */}
+        <NotificationSync />
+        {children}
+      </AuthProvider>
     </ThemeProvider>
   );
 }

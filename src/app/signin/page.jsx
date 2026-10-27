@@ -10,9 +10,7 @@ import {
   EyeOff,
   Github,
   Chrome,
-  User,
   Shield,
-  Briefcase,
   X,
   Loader2,
   CheckCircle2,
@@ -26,9 +24,10 @@ import {
   signInWithPopup,
   sendPasswordResetEmail,
 } from "firebase/auth";
-import api, { API_BASE } from "../lib/apiClient";
+import api from "../lib/apiClient";
 import { devLog, devWarn, safeError } from "../lib/logger";
 import { useAuth } from "../lib/AuthContext";
+import { setAuthSessionCookies } from "../lib/sessionCookie";
 
 function normalizeAuthError(err) {
   const code = String(err?.code || "").toLowerCase();
@@ -42,6 +41,17 @@ function normalizeAuthError(err) {
   }
 
   return message || "Authentication failed";
+}
+
+/**
+ * Only honor same-origin relative paths (?redirect=/jobs/xyz) to avoid
+ * open redirects. Anything else falls back to the landing page.
+ */
+function getPostSignInRedirect() {
+  if (typeof window === "undefined") return "/";
+  const param = new URLSearchParams(window.location.search).get("redirect");
+  if (param && param.startsWith("/") && !param.startsWith("//")) return param;
+  return "/";
 }
 
 export default function SignInPage() {
@@ -65,7 +75,6 @@ export default function SignInPage() {
   const [resetError, setResetError] = useState("");
 
   const router = useRouter();
-  const apiBase = API_BASE;
   const firebaseDisabled = !auth;
   const firebaseReason = !firebaseClientStatus.configured
     ? "missing-config"
@@ -117,8 +126,8 @@ export default function SignInPage() {
   }
 
   async function syncUserWithBackend(user) {
+    let existingRole = "candidate";
     try {
-      let existingRole = "candidate";
       try {
         const profileRes = await api.get(`/api/auth/profile/${user.uid}`);
         if (profileRes.data.success && profileRes.data.data?.role) {
@@ -142,6 +151,9 @@ export default function SignInPage() {
     } catch (err) {
       safeError("Failed to sync user with backend", err);
     }
+    // Role drives the middleware route-guard cookies set by the caller.
+    // Default "candidate" is the most restrictive role (fail-closed).
+    return existingRole;
   }
 
   const handleEmailSignIn = async (event) => {
@@ -158,10 +170,11 @@ export default function SignInPage() {
     setLoading(true);
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
-      await syncUserWithBackend(cred.user);
+      const role = await syncUserWithBackend(cred.user);
+      setAuthSessionCookies(role);
       sessionStorage.setItem("showWelcome", "1");
       setFailedAttempts(0);
-      router.push("/");
+      router.push(getPostSignInRedirect());
     } catch (err) {
       if (isWrongCredentialError(err)) {
         // Expected user-facing error; avoid noisy console errors.
@@ -225,10 +238,11 @@ export default function SignInPage() {
     setLoading(true);
     try {
       const cred = await signInWithPopup(auth, googleProvider);
-      await syncUserWithBackend(cred.user);
+      const role = await syncUserWithBackend(cred.user);
+      setAuthSessionCookies(role);
       sessionStorage.setItem("showWelcome", "1");
       setFailedAttempts(0);
-      router.push("/");
+      router.push(getPostSignInRedirect());
     } catch (err) {
       safeError("Google sign in error", err);
       const msg = normalizeAuthError(err);
@@ -297,7 +311,7 @@ export default function SignInPage() {
             <Rocket className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-black text-white tracking-tight">
-            JobMatch<span className="text-blue-200">AI</span>
+            SkillMatch<span className="text-blue-200">AI</span>
           </span>
         </Link>
 
@@ -318,10 +332,10 @@ export default function SignInPage() {
                 <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                   <Shield className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-[10px] font-black text-blue-200 uppercase tracking-widest">Top 1% Talent</span>
+                <span className="text-[10px] font-black text-blue-200 uppercase tracking-widest">Skill Verification</span>
               </div>
               <p className="text-white text-sm font-semibold leading-snug">
-                Verified professionals trusted by 500+ companies worldwide
+                Candidates prove their skills with structured assessments before applying
               </p>
             </div>
 
@@ -331,12 +345,11 @@ export default function SignInPage() {
                 <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                   <Rocket className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-[10px] font-black text-blue-200 uppercase tracking-widest">Matching Score</span>
+                <span className="text-[10px] font-black text-blue-200 uppercase tracking-widest">Explainable Matching</span>
               </div>
-              <div className="flex items-end gap-2">
-                <span className="text-3xl font-black text-white">98%</span>
-                <span className="text-blue-200 text-sm mb-1">accuracy rate</span>
-              </div>
+              <p className="text-white text-sm font-semibold leading-snug">
+                Every match comes with a skill-gap report so you know exactly why
+              </p>
             </div>
           </div>
         </div>
@@ -362,7 +375,7 @@ export default function SignInPage() {
               <Rocket className="w-5 h-5 text-white" />
             </div>
             <span className="text-lg font-black text-slate-900">
-              JobMatch<span style={{ color: "#6452F5" }}>AI</span>
+              SkillMatch<span style={{ color: "#6452F5" }}>AI</span>
             </span>
           </Link>
         </div>
@@ -371,7 +384,7 @@ export default function SignInPage() {
           {/* Heading */}
           <div className="mb-8 mt-14">
             <h2 className="text-3xl font-black text-slate-900 mb-1">Welcome back</h2>
-            <p className="text-slate-500 text-sm">Sign in to your JobMatch AI account</p>
+            <p className="text-slate-500 text-sm">Sign in to your SkillMatch AI account</p>
           </div>
 
           {/* Social buttons */}
@@ -470,7 +483,7 @@ export default function SignInPage() {
                   Signing in...
                 </>
               ) : (
-                "Sign Into JobMatch"
+                "Sign Into SkillMatch"
               )}
             </button>
           </form>
@@ -482,30 +495,6 @@ export default function SignInPage() {
               Create one for free
             </Link>
           </p>
-
-          {/* Quick Access */}
-          <div className="mt-8 border border-slate-200 rounded-2xl p-5">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-4">
-              Quick Access / Test Credentials
-            </p>
-            <div className="grid grid-cols-3 gap-2.5">
-              {[
-                { role: "Admin",     email: "admin@manager.com",         password: "admin@manager.com",         icon: Shield,   color: "text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100" },
-                { role: "Recruiter", email: "diptesemon@gmail.com",       password: "diptesemon@gmail.com",       icon: Briefcase, color: "text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100" },
-                { role: "Candidate", email: "dipteskundu6@gmail.com",     password: "dipteskundu6@gmail.com",     icon: User,     color: "text-indigo-600 bg-indigo-50 border-indigo-200 hover:bg-indigo-100" },
-              ].map(({ role: r, email: e, password: p, icon: Icon, color }) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => { setEmail(e); setPassword(p); }}
-                  className={`flex flex-col items-center gap-1.5 py-3 px-2 border rounded-xl transition-colors ${color}`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="text-[11px] font-bold">{r}</span>
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Footer links */}
           <div className="mt-6 flex items-center justify-center gap-4 flex-wrap">

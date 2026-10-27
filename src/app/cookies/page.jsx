@@ -2,6 +2,7 @@
 
 import Navbar from "../components/Navbar/Navbar";
 import Footer from "../components/Footer/Footer";
+import Link from "next/link";
 import { Cookie, Info, Settings, MousePointer2, ShieldCheck, PieChart } from "lucide-react";
 
 export default function CookiesPage() {
@@ -76,7 +77,7 @@ export default function CookiesPage() {
                             <Info className="w-5 h-5 text-indigo-600" /> Need more info?
                         </h3>
                         <p className="text-slate-500 text-sm max-w-lg mx-auto">
-                            If you have any questions about our use of cookies or other technologies, please email us at <a href="mailto:privacy@skillmatch.ai" className="text-indigo-600 font-semibold hover:underline">privacy@skillmatch.ai</a>.
+                            If you have any questions about our use of cookies or other technologies, please <Link href="/contact" className="text-indigo-600 font-semibold hover:underline">contact us</Link>.
                         </p>
                     </div>
                 </div>

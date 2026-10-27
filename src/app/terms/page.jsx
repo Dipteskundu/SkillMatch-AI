@@ -2,6 +2,7 @@
 
 import Navbar from "../components/Navbar/Navbar";
 import Footer from "../components/Footer/Footer";
+import Link from "next/link";
 import { Scale, CheckCircle, AlertTriangle, HelpCircle, FileCheck, Info } from "lucide-react";
 
 export default function TermsOfServicePage() {
@@ -9,12 +10,12 @@ export default function TermsOfServicePage() {
         {
             title: "1. Acceptance of Terms",
             icon: <FileCheck className="w-5 h-5 text-indigo-600" />,
-            content: "By accessing or using JobMatch AI, you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing this site."
+            content: "By accessing or using SkillMatch AI, you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing this site."
         },
         {
-            title: "2. Use License",
+            title: "2. Use of the Service",
             icon: <Info className="w-5 h-5 text-indigo-600" />,
-            content: "Permission is granted to temporarily download one copy of the materials (information or software) on JobMatch AI for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title."
+            content: "SkillMatch AI provides job matching, skill assessments and related hiring tools for your personal, non-commercial use in connection with finding or filling roles. You may not resell, scrape, or misuse the service or its content."
         },
         {
             title: "3. User Accounts",
@@ -29,12 +30,12 @@ export default function TermsOfServicePage() {
         {
             title: "5. Limitation of Liability",
             icon: <Scale className="w-5 h-5 text-indigo-600" />,
-            content: "In no event shall JobMatch AI or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit) arising out of the use or inability to use the materials on JobMatch AI."
+            content: "In no event shall SkillMatch AI or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit) arising out of the use or inability to use the service."
         },
         {
             title: "6. Support & Contact",
             icon: <HelpCircle className="w-5 h-5 text-indigo-600" />,
-            content: "If you have any questions about these Terms, please contact our support team at: legal@skillmatch.ai"
+            content: <>If you have any questions about these Terms, please <Link href="/contact" className="text-indigo-600 font-semibold hover:underline">contact us</Link>.</>
         }
     ];
 
@@ -50,7 +51,7 @@ export default function TermsOfServicePage() {
                             <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Legal Framework</span>
                         </div>
                         <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">Terms of Service</h1>
-                        <p className="text-slate-500 text-lg">Effective Date: February 18, 2026</p>
+                        <p className="text-slate-500 text-lg">Last updated: October 2026</p>
                     </div>
 
                     <div className="premium-shadow border border-slate-100 rounded-3xl overflow-hidden bg-white">

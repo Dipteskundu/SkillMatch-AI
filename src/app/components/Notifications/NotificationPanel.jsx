@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bell,
@@ -16,8 +16,18 @@ import {
 } from "lucide-react";
 import { ref, onChildAdded } from "firebase/database";
 import { rtdb } from "../../lib/firebaseClient";
-import api from "../../lib/apiClient";
 import { safeError } from "../../lib/logger";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import {
+  notificationReceived,
+  selectListUnreadCount,
+  selectNotifications,
+  selectNotificationsLoading,
+} from "../../store/notificationsSlice";
+import {
+  useMarkAllNotificationsReadMutation,
+  useMarkNotificationReadMutation,
+} from "../../store/api/apiSlice";
 
 const TYPE_CONFIG = {
   application_viewed: { icon: Eye, color: "text-blue-500", bg: "bg-blue-50" },
@@ -89,81 +99,34 @@ function NotificationItem({ notif, onRead }) {
   );
 }
 
-export default function NotificationPanel({
-  uid,
-  isOpen,
-  onClose,
-  setParentUnreadCount,
-}) {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function NotificationPanel({ uid, isOpen, onClose }) {
+  const dispatch = useAppDispatch();
   const router = useRouter();
+  // Notifications are fetched/polling-synced once app-wide (see
+  // store/NotificationSync) and live in the shared notifications slice.
+  const notifications = useAppSelector(selectNotifications);
+  const loading = useAppSelector(selectNotificationsLoading);
+  // Derived during render from the shared list (no effect needed).
+  const unreadCount = useAppSelector(selectListUnreadCount);
+  const [markNotificationRead] = useMarkNotificationReadMutation();
+  const [markAllNotificationsRead] = useMarkAllNotificationsReadMutation();
 
-  // Derive unreadCount directly during render, no effect needed
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
+  // Real-time listener: push new notifications into the shared slice instead
+  // of keeping local component state.
   useEffect(() => {
-    if (!uid) return;
-    let mounted = true;
-
-    api.get(`/api/notifications/${uid}`)
-      .then((res) => {
-        if (!mounted) return;
-        const json = res.data;
-        if (json.success && json.data) {
-          const fetchedNotifs = json.data.notifications || [];
-          setNotifications(fetchedNotifs);
-          if (setParentUnreadCount) {
-            setParentUnreadCount(fetchedNotifs.filter((n) => !n.read).length);
-          }
-        }
-      })
-      .catch((err) => {
-        // Avoid repeated noisy logs when the backend is offline in dev.
-        safeError("Failed to fetch notifications", err);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-
-    if (!rtdb) {
-      return () => {
-        mounted = false;
-      };
-    }
+    if (!uid || !rtdb) return undefined;
 
     const notifRef = ref(rtdb, `notifications/${uid}`);
     const unsubscribe = onChildAdded(notifRef, (snapshot) => {
-      if (!mounted) return;
       const newNotif = snapshot.val();
       if (!newNotif) return;
-
-      setNotifications((prev) => {
-        const isDuplicate = prev.some(
-          (n) =>
-            n.message === newNotif.message &&
-            Math.abs(
-              new Date(n.createdAt).getTime() -
-                new Date(newNotif.createdAt).getTime(),
-            ) < 10000,
-        );
-
-        if (isDuplicate) return prev;
-
-        // Safely update parent state without triggering synchronous cascading renders
-        if (!newNotif.read && setParentUnreadCount) {
-          setTimeout(() => setParentUnreadCount((c) => c + 1), 0);
-        }
-
-        return [newNotif, ...prev];
-      });
+      dispatch(notificationReceived(newNotif));
     });
 
     return () => {
-      mounted = false;
       if (typeof unsubscribe === "function") unsubscribe();
     };
-  }, [uid, setParentUnreadCount]);
+  }, [uid, dispatch]);
 
   async function handleNotificationClick(notif) {
     const id = notif._id || notif.id;
@@ -177,17 +140,9 @@ export default function NotificationPanel({
     // Only mark as read if it's currently unread
     if (!notif.read) {
       try {
-        const res = await api.patch(`/api/notifications/${id}/read`);
-        const json = res.data;
-        if (json.success) {
-          setNotifications((prev) =>
-            prev.map((n) =>
-              n._id === id || n.id === id ? { ...n, read: true } : n,
-            ),
-          );
-          if (setParentUnreadCount) {
-            setParentUnreadCount((c) => Math.max(0, c - 1));
-          }
+        const res = await markNotificationRead(id).unwrap();
+        if (!res?.success) {
+          safeError("Failed to mark notification as read", res?.message);
         }
       } catch (err) {
         safeError("Failed to mark notification as read", err);
@@ -197,13 +152,9 @@ export default function NotificationPanel({
 
   async function markAllRead() {
     try {
-      const res = await api.patch(`/api/notifications/read-all/${uid}`);
-      const json = res.data;
-      if (json.success) {
-        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-        if (setParentUnreadCount) {
-          setParentUnreadCount(0);
-        }
+      const res = await markAllNotificationsRead(uid).unwrap();
+      if (!res?.success) {
+        safeError("Failed to mark all as read", res?.message);
       }
     } catch (err) {
       safeError("Failed to mark all as read", err);

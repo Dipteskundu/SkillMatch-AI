@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/AuthContext";
-import api, { API_BASE } from "../../lib/apiClient";
+import api from "../../lib/apiClient";
+import { mergeChips, removeChip, linesToList, listToLines, suggestSkills } from "../../lib/jobDraft";
 import {
   Briefcase, MapPin, DollarSign, Users, Calendar, Code,
   FileText, AlignLeft, CheckCircle, AlertCircle, Loader2, ArrowLeft,
+  Sparkles, X, Plus, ListChecks,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -19,14 +21,96 @@ export default function PostJobPage() {
 
   const [form, setForm] = useState({
     title: "", company: "", location: "", salaryRange: "",
-    experienceLevel: "", employmentType: "", skills: "",
-    description: "", responsibilities: "", vacancies: "", deadline: "",
+    experienceLevel: "", employmentType: "",
+    description: "", responsibilities: "", requirements: "",
+    vacancies: "", deadline: "",
   });
+  const [skills, setSkills] = useState([]);          // required-skill chips
+  const [niceToHave, setNiceToHave] = useState([]);  // nice-to-have chips
+  const [suggestions, setSuggestions] = useState([]); // AI-proposed skills to add
   const [posting, setPosting] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [aiDraft, setAiDraft] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [genMsg, setGenMsg] = useState(null);
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
+  /* ── AI draft ─────────────────────────────────────────── */
+  const handleGenerateDraft = async () => {
+    if (generating) return;
+    if (!user?.uid) { setGenMsg({ type: "error", text: "Not authenticated." }); return; }
+    if (!form.title.trim()) {
+      setGenMsg({ type: "error", text: "Add a job title first — the draft is built from it." });
+      return;
+    }
+
+    setGenerating(true);
+    setGenMsg(null);
+    try {
+      const res = await api.post("/api/jobs/generate-draft", {
+        uid: user.uid,
+        title: form.title.trim(),
+        ...(skills.length ? { skills } : {}),
+        ...(form.experienceLevel ? { seniority: form.experienceLevel } : {}),
+      });
+      const payload = res?.data;
+      const draft = payload?.data;
+
+      if (!payload?.success || !draft) {
+        setGenMsg({ type: "error", text: payload?.message || "AI draft failed. Please try again." });
+        return;
+      }
+
+      setForm(f => ({
+        ...f,
+        description: draft.description || f.description,
+        responsibilities: listToLines(draft.responsibilities) || f.responsibilities,
+        requirements: listToLines(draft.requirements) || f.requirements,
+      }));
+      const proposed = Array.isArray(draft.niceToHaveSkills)
+        ? draft.niceToHaveSkills
+        : Array.isArray(draft.niceToHave)
+          ? draft.niceToHave
+          : [];
+
+      if (proposed.length) setNiceToHave(prev => mergeChips(prev, proposed));
+
+      // Suggested chips = generated nice-to-have skills + skills named in the
+      // requirements, minus what the required-skills input already holds.
+      setSuggestions(suggestSkills({
+        niceToHave: proposed,
+        requirements: draft.requirements || [],
+        exclude: skills,
+      }));
+      setAiDraft(true);
+    } catch (err) {
+      // apiClient resolves HTTP 500s, so anything here is a real transport /
+      // 4xx problem — say exactly what happened instead of blaming the AI.
+      const status = err?.response?.status;
+      const serverMsg = err?.response?.data?.message;
+      if (status === 404) {
+        setGenMsg({ type: "error", text: "AI draft generation isn't available on this server yet." });
+      } else if (status === 429) {
+        setGenMsg({ type: "error", text: serverMsg || "Too many AI requests — wait a few minutes and try again." });
+      } else if (status === 403) {
+        setGenMsg({ type: "error", text: serverMsg || "Only recruiter accounts can generate drafts." });
+      } else if (status) {
+        setGenMsg({ type: "error", text: serverMsg || "AI draft failed. Please try again." });
+      } else {
+        setGenMsg({ type: "error", text: "Couldn't reach the server. Check your connection and try again." });
+      }
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const addSuggestedSkill = (skill) => {
+    setSkills(prev => mergeChips(prev, [skill]));
+    setSuggestions(prev => removeChip(prev, skill));
+  };
+
+  /* ── Submit ───────────────────────────────────────────── */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user?.uid) { setMsg({ type: "error", text: "Not authenticated." }); return; }
@@ -35,8 +119,10 @@ export default function PostJobPage() {
     try {
       const res = await api.post("/api/jobs", {
         ...form,
-        skills: form.skills.split(",").map(s => s.trim()).filter(Boolean),
-        responsibilities: form.responsibilities.split("\n").map(r => r.trim()).filter(Boolean),
+        skills,
+        responsibilities: linesToList(form.responsibilities),
+        requirements: linesToList(form.requirements),
+        niceToHaveSkills: niceToHave,
         vacancies: form.vacancies ? parseInt(form.vacancies, 10) : null,
         postedBy: user.uid,
       });
@@ -123,16 +209,75 @@ export default function PostJobPage() {
             </div>
           </Section>
 
-          {/* Skills */}
+          {/* Skills (chips) */}
           <Section icon={<Code className="w-4 h-4 text-indigo-600" />} title="Required Skills">
-            <Field label="Skills (comma separated)">
-              <input type="text" placeholder="e.g. React, Node.js, TypeScript, MongoDB" value={form.skills}
-                onChange={e => set("skills", e.target.value)} className={inputCls} />
+            <Field label="Add skills — press Enter or comma">
+              <ChipField
+                values={skills}
+                onChange={setSkills}
+                placeholder="e.g. React, Node.js, TypeScript, MongoDB"
+              />
             </Field>
+
+            {suggestions.length > 0 && (
+              <Field label="Suggested by AI — click to add to required skills">
+                <div className="flex flex-wrap gap-2">
+                  {suggestions.map(skill => (
+                    <button
+                      key={skill.toLowerCase()}
+                      type="button"
+                      onClick={() => addSuggestedSkill(skill)}
+                      className="inline-flex items-center gap-1 rounded-full border border-dashed border-indigo-300 bg-indigo-50/60 px-3 py-1.5 text-xs font-bold text-indigo-700 transition-all hover:border-indigo-400 hover:bg-indigo-100"
+                    >
+                      <Plus className="w-3 h-3" /> {skill}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            )}
           </Section>
 
-          {/* Description */}
-          <Section icon={<AlignLeft className="w-4 h-4 text-indigo-600" />} title="Job Description">
+          {/* Description + AI draft */}
+          <Section
+            icon={<AlignLeft className="w-4 h-4 text-indigo-600" />}
+            title="Job Description"
+            action={
+              <button
+                type="button"
+                onClick={handleGenerateDraft}
+                disabled={generating}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-black text-indigo-700 transition-all hover:bg-indigo-100 hover:border-indigo-300 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {generating
+                  ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Generating…</>
+                  : <><Sparkles className="w-3.5 h-3.5" /> Generate with AI</>}
+              </button>
+            }
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Uses the title, skills and experience level above. Every field stays editable.
+              </p>
+              {aiDraft && (
+                <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-amber-700">
+                  <Sparkles className="w-3 h-3" /> AI draft — review before posting
+                </span>
+              )}
+            </div>
+
+            {genMsg && (
+              <div className={`flex items-center gap-2 p-3 rounded-xl text-xs font-bold ${
+                genMsg.type === "success"
+                  ? "bg-emerald-50 border border-emerald-100 text-emerald-700"
+                  : "bg-red-50 border border-red-100 text-red-600"
+              }`}>
+                {genMsg.type === "success"
+                  ? <CheckCircle className="w-4 h-4 shrink-0" />
+                  : <AlertCircle className="w-4 h-4 shrink-0" />}
+                {genMsg.text}
+              </div>
+            )}
+
             <Field label="Description *">
               <textarea required rows={5} placeholder="Describe the role, team, and what candidates will work on..."
                 value={form.description} onChange={e => set("description", e.target.value)}
@@ -146,6 +291,22 @@ export default function PostJobPage() {
               <textarea rows={5} placeholder={"- Build and maintain frontend components\n- Collaborate with design team\n- Participate in code reviews"}
                 value={form.responsibilities} onChange={e => set("responsibilities", e.target.value)}
                 className={`${inputCls} resize-y font-mono text-xs`} />
+            </Field>
+          </Section>
+
+          {/* Requirements + nice-to-have */}
+          <Section icon={<ListChecks className="w-4 h-4 text-indigo-600" />} title="Requirements & Nice to Have">
+            <Field label="One requirement per line">
+              <textarea rows={4} placeholder={"- Hands-on experience with React\n- 3+ years building web applications\n- Familiarity with MongoDB"}
+                value={form.requirements} onChange={e => set("requirements", e.target.value)}
+                className={`${inputCls} resize-y font-mono text-xs`} />
+            </Field>
+            <Field label="Nice-to-have skills (optional)">
+              <ChipField
+                values={niceToHave}
+                onChange={setNiceToHave}
+                placeholder="e.g. GraphQL, Docker, Figma"
+              />
             </Field>
           </Section>
 
@@ -178,12 +339,15 @@ export default function PostJobPage() {
 
 const inputCls = "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all text-sm font-medium text-slate-900 placeholder:text-slate-300";
 
-function Section({ icon, title, children }) {
+function Section({ icon, title, action, children }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
-      <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-        <div className="p-1.5 bg-indigo-50 rounded-lg">{icon}</div>
-        <h2 className="font-black text-slate-900 text-sm">{title}</h2>
+      <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 bg-indigo-50 rounded-lg">{icon}</div>
+          <h2 className="font-black text-slate-900 text-sm">{title}</h2>
+        </div>
+        {action}
       </div>
       {children}
     </div>
@@ -195,6 +359,59 @@ function Field({ label, children }) {
     <div className="space-y-1.5">
       {label && <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</label>}
       {children}
+    </div>
+  );
+}
+
+/** Chip input: Enter/comma adds, × (or Backspace on empty input) removes. */
+function ChipField({ values, onChange, placeholder }) {
+  const [draft, setDraft] = useState("");
+
+  const commit = () => {
+    if (!draft.trim()) return;
+    onChange(mergeChips(values, [draft]));
+    setDraft("");
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === "," || e.key === ";") {
+      e.preventDefault();
+      commit();
+    } else if (e.key === "Backspace" && !draft && values.length) {
+      onChange(removeChip(values, values[values.length - 1]));
+    }
+  };
+
+  return (
+    <div className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus-within:ring-2 focus-within:ring-indigo-500 focus-within:bg-white transition-all">
+      <div className="flex flex-wrap items-center gap-2">
+        {values.map(value => (
+          <span
+            key={value.toLowerCase()}
+            className="inline-flex items-center gap-1 pl-3 pr-1.5 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-xs font-bold text-indigo-700"
+          >
+            {value}
+            <button
+              type="button"
+              onClick={() => onChange(removeChip(values, value))}
+              aria-label={`Remove ${value}`}
+              className="w-4 h-4 inline-flex items-center justify-center rounded-full text-indigo-400 hover:bg-indigo-100 hover:text-indigo-700 transition-colors"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        ))}
+        <input
+          type="text"
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={commit}
+          placeholder={values.length ? "Add another…" : placeholder}
+          aria-label="Add a skill"
+          className="flex-1 min-w-[9rem] bg-transparent border-0 outline-none py-1 text-sm font-medium text-slate-900 placeholder:text-slate-300"
+        />
+      </div>
     </div>
   );
 }

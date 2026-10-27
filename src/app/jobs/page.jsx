@@ -21,11 +21,26 @@ import {
   AlertCircle,
   LogIn,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PageWrapper from "../components/common/PageWrapper";
-import api, { API_BASE } from "../lib/apiClient";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import {
+  selectJobFilters,
+  setSearch,
+  setLocation,
+  toggleJobType,
+  setSalaryRange,
+  setPage,
+  clearJobFilters,
+} from "../store/jobFiltersSlice";
+import {
+  useGetJobsQuery,
+  useGetCandidateDashboardQuery,
+  useSaveJobMutation,
+  usePreApplyCheckMutation,
+} from "../store/api/apiSlice";
 
 const JOBS_PER_PAGE = 9;
 
@@ -144,22 +159,61 @@ function Pagination({ current, total, onChange }) {
 export default function JobsPage() {
   const { user, role, isAuthenticated } = useAuth();
   const router = useRouter();
-  const apiBase = API_BASE;
+  const dispatch = useAppDispatch();
 
-  /* ── Data ─────────────────────────────────────── */
-  const [jobs, setJobs] = useState([]);
-  const [appliedJobIds, setAppliedJobIds] = useState(new Set());
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [infoMessage, setInfoMessage] = useState("");
-
-  /* ── Filters (only active when authenticated) ─── */
-  const [searchTerm, setSearchTerm] = useState("");
-  const [locationTerm, setLocationTerm] = useState("");
-  const [selectedTypes, setSelectedTypes] = useState([]);
-  const [salaryRange, setSalaryRange] = useState(0); // index into SALARY_RANGES
+  /* ── Filters (shared + persisted via Redux) ───── */
+  const {
+    search: searchTerm,
+    location: locationTerm,
+    type: selectedTypes,
+    salaryRange,
+    page: currentPage,
+  } = useAppSelector(selectJobFilters);
   const [sortBy, setSortBy] = useState("newest");
   const [filtersOpen, setFiltersOpen] = useState(false); // mobile
+
+  /* ── Data (RTK Query) ─────────────────────────── */
+  const [actionError, setActionError] = useState(null);
+  const [infoMessage, setInfoMessage] = useState("");
+  const { data: jobsPayload, isError: jobsFailed } = useGetJobsQuery();
+  const requiresApplications = isAuthenticated && !!user?.uid;
+  const { data: dashPayload, isError: applicationsFailed } =
+    useGetCandidateDashboardQuery(user?.uid, { skip: !requiresApplications });
+
+  const jobs = useMemo(() => jobsPayload?.data || [], [jobsPayload]);
+  const appliedJobIds = useMemo(() => {
+    const ids = new Set();
+    const apps = dashPayload?.data?.applications || [];
+    const normalize = (val) => {
+      if (!val) return "";
+      if (typeof val === "string") return val;
+      if (val.$oid) return val.$oid;
+      try {
+        const s = String(val);
+        const m = s.match(/([a-f0-9]{24})/i);
+        if (m) return m[1];
+        return s;
+      } catch (e) {
+        return "";
+      }
+    };
+    apps.forEach((a) => {
+      const jid = normalize(a.jobId);
+      if (jid) ids.add(jid);
+    });
+    return ids;
+  }, [dashPayload]);
+
+  /* Skeleton until every needed request has settled (keeps SSR markup stable). */
+  const loading =
+    (!jobsPayload && !jobsFailed) ||
+    (requiresApplications && !dashPayload && !applicationsFailed);
+  const error = jobsFailed
+    ? "Could not load jobs. Please try again later."
+    : actionError;
+
+  const [saveJob] = useSaveJobMutation();
+  const [preApplyCheck] = usePreApplyCheckMutation();
 
   /* ── Recruiter apply guard ────────────────────── */
   const [showRecruiterModal, setShowRecruiterModal] = useState(false);
@@ -173,52 +227,25 @@ export default function JobsPage() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  /* ── Pagination ───────────────────────────────── */
-  const [currentPage, setCurrentPage] = useState(1);
-
-  /* ── Fetch ────────────────────────────────────── */
+  /* ── Seed search from ?search= (deep links / navbar) ─
+   * The URL param wins over persisted filters. We wait for redux-persist
+   * rehydration before reading it so restored filters can't clobber the param
+   * afterwards, and only apply it once per mount so user edits aren't
+   * overwritten (navbar searches also dispatch straight into the store). */
+  const rehydrated = useAppSelector(
+    (state) => state._persist?.rehydrated === true,
+  );
+  const seedHandledRef = useRef(false);
   useEffect(() => {
-    async function fetchJobs() {
-      try {
-        const res = await api.get("/api/jobs");
-        setJobs(res.data.data || []);
-        // If user is authenticated, also fetch their applications to hide applied jobs
-        if (isAuthenticated && user?.uid) {
-          try {
-            const dashRes = await api.get(`/api/dashboard/candidate/${user.uid}`);
-            const apps = dashRes.data.data?.applications || [];
-              const ids = new Set();
-              const normalize = (val) => {
-                if (!val) return "";
-                if (typeof val === "string") return val;
-                if (val.$oid) return val.$oid;
-                try {
-                  const s = String(val);
-                  const m = s.match(/([a-f0-9]{24})/i);
-                  if (m) return m[1];
-                  return s;
-                } catch (e) {
-                  return "";
-                }
-              };
-              apps.forEach((a) => {
-                const jid = normalize(a.jobId);
-                if (jid) ids.add(jid);
-              });
-              setAppliedJobIds(ids);
-          } catch (err) {
-            console.error("Failed to fetch candidate applications:", err);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch jobs", err);
-        setError("Could not load jobs. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
+    if (!rehydrated || seedHandledRef.current) return;
+    seedHandledRef.current = true;
+    const paramSearch = new URLSearchParams(window.location.search).get(
+      "search",
+    );
+    if (paramSearch !== null && paramSearch !== searchTerm) {
+      dispatch(setSearch(paramSearch));
     }
-    fetchJobs();
-  }, [apiBase, isAuthenticated, user]);
+  }, [rehydrated, searchTerm, dispatch]);
 
   /* ── Auto-Open Modal from Notification Link ───── */
   useEffect(() => {
@@ -241,20 +268,13 @@ export default function JobsPage() {
 
   /* ── Toggle job type filter ───────────────────── */
   const toggleType = (type) => {
-    setSelectedTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
-    );
-    setCurrentPage(1);
+    dispatch(toggleJobType(type));
   };
 
   /* ── Clear all filters ────────────────────────── */
   const clearFilters = () => {
-    setSearchTerm("");
-    setLocationTerm("");
-    setSelectedTypes([]);
-    setSalaryRange(0);
+    dispatch(clearJobFilters());
     setSortBy("newest");
-    setCurrentPage(1);
   };
 
   /* ── Derived: filtered + sorted list ─────────── */
@@ -336,7 +356,7 @@ export default function JobsPage() {
     (locationTerm ? 1 : 0);
 
   const handlePageChange = (p) => {
-    setCurrentPage(p);
+    dispatch(setPage(p));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -354,8 +374,7 @@ export default function JobsPage() {
 
     try {
       // Check verification first
-      const res = await api.post(`/api/jobs/${job._id}/pre-apply-check`, { uid: user.uid });
-      const data = res.data;
+      const data = await preApplyCheck({ jobId: job._id, uid: user.uid }).unwrap();
 
       if (data.allowed) {
         // Verified: proceed to Skill Gap Analysis page
@@ -364,7 +383,7 @@ export default function JobsPage() {
         // Not verified: go to intro page
         router.push(data.redirectTo);
       } else {
-        setError(data.message || "Cannot apply at this time.");
+        setActionError(data.message || "Cannot apply at this time.");
       }
     } catch (err) {
       console.error("Verification check failed:", err);
@@ -377,15 +396,19 @@ export default function JobsPage() {
       router.push("/signin");
       return;
     }
-    try {
-      const res = await api.post(`/api/jobs/${job._id}/save`, { uid: user.uid, email: user.email });
-      if (res.status === 200 || res.data.success) {
-        setInfoMessage("Job saved to your account ✓");
-        setTimeout(() => setInfoMessage(""), 3000);
-      }
-    } catch (err) {
-      console.error("Failed to save job", err);
+    const res = await saveJob({
+      jobId: job._id,
+      uid: user.uid,
+      email: user.email,
+    });
+    if (res.error) {
+      console.error("Failed to save job", res.error);
+      return;
     }
+    // apiClient resolves HTTP 500s into `{ _serverError: true }` bodies.
+    if (res.data?._serverError) return;
+    setInfoMessage("Job saved to your account ✓");
+    setTimeout(() => setInfoMessage(""), 3000);
   };
 
   const handleUploadResumeClick = () => {
@@ -397,7 +420,7 @@ export default function JobsPage() {
   };
 
   /* ── Sidebar filter panel (shared desktop + mobile) ── */
-  const SidebarFilters = () => (
+  const renderSidebarFilters = () => (
     <div className="space-y-8">
       {/* Job Type */}
       <div>
@@ -439,10 +462,7 @@ export default function JobsPage() {
                 type="radio"
                 name="salary"
                 checked={salaryRange === idx}
-                onChange={() => {
-                  setSalaryRange(idx);
-                  setCurrentPage(1);
-                }}
+                onChange={() => dispatch(setSalaryRange(idx))}
                 className="w-[18px] h-[18px] border-slate-300 text-indigo-600 focus:ring-indigo-500"
               />
               <span className="text-slate-600 text-sm font-semibold group-hover:text-slate-900 transition-colors">
@@ -520,10 +540,7 @@ export default function JobsPage() {
                   }
                   className="w-full pl-12 pr-5 py-3.5 sm:py-4 bg-transparent border-none focus:ring-0 text-slate-900 font-medium placeholder:text-slate-400 outline-none text-sm sm:text-base"
                   value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
+                  onChange={(e) => dispatch(setSearch(e.target.value))}
                   disabled={!isAuthenticated}
                 />
               </div>
@@ -540,15 +557,12 @@ export default function JobsPage() {
                   }
                   className="w-full pl-12 pr-5 py-3.5 sm:py-4 bg-transparent border-none focus:ring-0 text-slate-900 font-medium placeholder:text-slate-400 outline-none text-sm sm:text-base"
                   value={locationTerm}
-                  onChange={(e) => {
-                    setLocationTerm(e.target.value);
-                    setCurrentPage(1);
-                  }}
+                  onChange={(e) => dispatch(setLocation(e.target.value))}
                   disabled={!isAuthenticated}
                 />
               </div>
               <button
-                onClick={() => setCurrentPage(1)}
+                onClick={() => dispatch(setPage(1))}
                 disabled={!isAuthenticated}
                 className="w-full md:w-auto px-8 py-3.5 sm:py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed text-sm sm:text-base"
               >
@@ -601,7 +615,7 @@ export default function JobsPage() {
             {/* ── Mobile Filters Drawer ── */}
             {isAuthenticated && filtersOpen && (
               <div className="lg:hidden mb-6 bg-white border border-slate-100 rounded-2xl p-6 premium-shadow animate-fade-in">
-                <SidebarFilters />
+                {renderSidebarFilters()}
               </div>
             )}
 
@@ -628,7 +642,7 @@ export default function JobsPage() {
                           : ""
                       }
                     >
-                      <SidebarFilters />
+                      {renderSidebarFilters()}
                     </div>
                   </div>
                 </div>
@@ -655,7 +669,7 @@ export default function JobsPage() {
                         value={sortBy}
                         onChange={(e) => {
                           setSortBy(e.target.value);
-                          setCurrentPage(1);
+                          dispatch(setPage(1));
                         }}
                         className="bg-transparent border border-slate-200 text-sm font-bold text-slate-700 rounded-lg px-3 py-1.5 focus:ring-indigo-500 cursor-pointer"
                       >
@@ -883,6 +897,7 @@ export default function JobsPage() {
       <ApplyModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        jobId={selectedJob?._id}
         jobTitle={selectedJob?.title}
         companyName={selectedJob?.company}
       />

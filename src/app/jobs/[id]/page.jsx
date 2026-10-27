@@ -103,8 +103,9 @@ export default function JobDetailsPage() {
     } catch { /* ignore */ }
   };
 
-  // Loading / auth states
-  if (authLoading || (!isAuthenticated && !authLoading)) {
+  // Loading state — only while auth resolves. Guests deliberately get to
+  // READ the job; apply/save handlers redirect signed-out users themselves.
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
@@ -112,12 +113,58 @@ export default function JobDetailsPage() {
     );
   }
 
+  // Schema.org JobPosting — built ONLY from real job fields (live shapes:
+  // company/location/salary are plain strings here). Optional fields are
+  // dropped when absent rather than invented.
+  const EMPLOYMENT_TYPE_MAP = {
+    "full-time": "FULL_TIME",
+    "part-time": "PART_TIME",
+    contract: "CONTRACT",
+    internship: "INTERNSHIP",
+  };
+  const jobJsonLd = job
+    ? {
+        "@context": "https://schema.org",
+        "@type": "JobPosting",
+        title: job.title || "",
+        description:
+          (job.description || "").slice(0, 4000) || job.title || "",
+        datePosted: job.createdAt || job.postedAt || undefined,
+        employmentType:
+          EMPLOYMENT_TYPE_MAP[String(job.employmentType || "").toLowerCase()],
+        hiringOrganization: {
+          "@type": "Organization",
+          name: job.company || "Unknown",
+        },
+        ...(job.location
+          ? {
+              jobLocation: {
+                "@type": "Place",
+                address: {
+                  "@type": "PostalAddress",
+                  addressLocality: String(job.location),
+                },
+              },
+            }
+          : {}),
+        directApply: true,
+      }
+    : null;
+
   return (
     <div className="min-h-screen bg-[#fdfdfe]">
       <Navbar />
 
       <main className="pt-8 pb-24">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          {jobJsonLd && (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify(jobJsonLd).replace(/</g, "\\u003c"),
+              }}
+            />
+          )}
 
           {/* Back */}
           <Link

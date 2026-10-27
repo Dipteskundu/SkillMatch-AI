@@ -45,8 +45,8 @@ export default function SkillIntroPage() {
               {[
                 "Prove your technical skills to recruiters with verified evidence",
                 "Build trust and stand out from unverified candidates",
-                "Increase your chance of being shortlisted significantly",
-                "Earn a permanent ✔ Skill Verified badge on your profile",
+                "Show verified skills directly on your profile to recruiters",
+                "Earn a Skill Verified badge on your profile",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-3 text-sm text-slate-600">
                   <span className="mt-0.5 w-5 h-5 bg-indigo-50 rounded-full flex items-center justify-center shrink-0">
@@ -85,7 +85,7 @@ export default function SkillIntroPage() {
             <ul className="space-y-3">
               {[
                 "You receive a ✔ Verified Skill Badge on your profile",
-                "Your result is saved — valid for 180 days",
+                "Your result is saved to your profile",
                 "You move to the Communication Verification test",
                 "After both tests pass, you can apply to any job",
               ].map((item) => (

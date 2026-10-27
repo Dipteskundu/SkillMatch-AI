@@ -5,6 +5,12 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./firebaseClient";
 
 import api from "./apiClient";
+import {
+  setAuthSessionCookies,
+  clearAuthSessionCookies,
+} from "./sessionCookie";
+import { useAppDispatch } from "../store/hooks";
+import { syncAuth } from "../store/authSlice";
 
 const AuthContext = createContext(null);
 
@@ -13,6 +19,7 @@ export function AuthProvider({ children }) {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const firebaseReady = Boolean(auth);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     if (!auth) {
@@ -28,12 +35,16 @@ export function AuthProvider({ children }) {
           const res = await api.get(`/api/auth/profile/${firebaseUser.uid}`);
           if (res.data.success) {
             setUserProfile(res.data.data);
+            // Keep the middleware route-guard marker in sync with the
+            // backend role (refreshes the short-lived cookie on load).
+            setAuthSessionCookies(res.data.data?.role);
           }
         } catch (err) {
           console.error("Failed to fetch user profile in AuthContext:", err);
         }
       } else {
         setUserProfile(null);
+        clearAuthSessionCookies();
       }
       setLoading(false);
     });
@@ -41,11 +52,18 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
+  // Mirror auth state into the Redux store so non-context consumers can read
+  // it via selectors. Firebase (this context) remains the source of truth.
+  useEffect(() => {
+    dispatch(syncAuth({ user, userProfile, loading }));
+  }, [dispatch, user, userProfile, loading]);
+
   const logout = async () => {
     if (!auth) return;
     await signOut(auth);
     setUser(null);
     setUserProfile(null);
+    clearAuthSessionCookies();
   };
 
   const refreshUser = async () => {
@@ -57,6 +75,7 @@ export function AuthProvider({ children }) {
         const res = await api.get(`/api/auth/profile/${auth.currentUser.uid}`);
         if (res.data.success) {
           setUserProfile(res.data.data);
+          setAuthSessionCookies(res.data.data?.role);
         }
       } catch (err) {
         console.error("Failed to refresh user profile:", err);

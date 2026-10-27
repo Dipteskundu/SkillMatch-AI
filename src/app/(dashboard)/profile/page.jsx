@@ -81,11 +81,6 @@ export default function ProfilePage() {
                     className="border-[3px] border-white/90 rounded-full"
                   />
                 </div>
-                {profile?.role === "candidate" && (
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full border-2 border-white uppercase tracking-tight whitespace-nowrap">
-                    PRO
-                  </span>
-                )}
               </div>
 
               {/* Info */}

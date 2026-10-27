@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Send, Trash2, UserRound, X, ExternalLink } from "lucide-react";
+import { MessageCircle, Send, Trash2, UserRound, X, ExternalLink, Briefcase } from "lucide-react";
+import Link from "next/link";
 import { useAuth } from "../../lib/AuthContext";
 import { askBot, fetchHistory, clearHistory } from "../../lib/chatbotApi";
 import Avatar from "../common/Avatar";
@@ -115,13 +116,21 @@ export default function Chatbot() {
       const timeoutId = setTimeout(() => controller.abort(), 25000);
 
       try {
-        const payload = await askBot(prompt, controller.signal);
-        const assistantText = String(payload?.assistant || "").trim() ||
+        // askBot normalizes BOTH backend shapes: the career-agent payload
+        // ({data:{answer, sources, grounded}}) and the older {assistant, link}.
+        const { answer, sources, grounded, link } = await askBot(prompt, controller.signal);
+        const assistantText = answer ||
           "I encountered an error while processing your request. Please try again.";
-        const link = payload?.link || null;
         setMessages((prev) => [
           ...prev,
-          { id: makeId(), role: "assistant", text: assistantText, link },
+          {
+            id: makeId(),
+            role: "assistant",
+            text: assistantText,
+            link: link || null,
+            sources: sources || [],
+            grounded,
+          },
         ]);
       } catch (_) {
         setMessages((prev) => [
@@ -249,6 +258,41 @@ export default function Chatbot() {
                         <ExternalLink className="h-3.5 w-3.5" />
                         {msg.link.label}
                       </button>
+                    )}
+
+                    {/* Career-agent citations: clickable job chips (new backend only —
+                        older backends return no `sources`, so nothing renders). */}
+                    {msg.role === "assistant" && (msg.sources?.length > 0 || msg.grounded === true) && (
+                      <div className="flex flex-col gap-1.5 self-start min-w-0">
+                        {msg.sources?.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                              Roles mentioned:
+                            </span>
+                            {msg.sources.map((src) => (
+                              <Link
+                                key={`${src.type}-${src.id}`}
+                                href={`/jobs/${src.id}`}
+                                onClick={() => setOpen(false)}
+                                title={src.company ? `${src.title} at ${src.company}` : src.title}
+                                className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[12px] font-bold text-indigo-700 transition-colors hover:border-indigo-300 hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                              >
+                                <Briefcase className="h-3 w-3 shrink-0" aria-hidden="true" />
+                                <span className="truncate">
+                                  {src.title}
+                                  {src.company ? ` @ ${src.company}` : ""}
+                                </span>
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                        {msg.grounded === true && msg.sources?.length > 0 && (
+                          <span className="text-[11px] font-medium text-slate-400">
+                            Grounded on {msg.sources.length} matching role
+                            {msg.sources.length === 1 ? "" : "s"}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                   {msg.role === "user" && <MessageAvatar role="user" />}

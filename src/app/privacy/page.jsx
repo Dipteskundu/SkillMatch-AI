@@ -2,6 +2,7 @@
 
 import Navbar from "../components/Navbar/Navbar";
 import Footer from "../components/Footer/Footer";
+import Link from "next/link";
 import { Shield, Lock, Eye, FileText, Bell, Mail } from "lucide-react";
 
 export default function PrivacyPolicyPage() {
@@ -9,7 +10,7 @@ export default function PrivacyPolicyPage() {
     {
       title: "Introduction",
       icon: <FileText className="w-5 h-5 text-indigo-600" />,
-      content: "Welcome to JobMatch AI. We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you as to how we look after your personal data when you visit our website and tell you about your privacy rights and how the law protects you."
+      content: "Welcome to SkillMatch AI. We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you as to how we look after your personal data when you visit our website and tell you about your privacy rights and how the law protects you."
     },
     {
       title: "Information We Collect",
@@ -34,7 +35,7 @@ export default function PrivacyPolicyPage() {
     {
       title: "Contact Us",
       icon: <Mail className="w-5 h-5 text-indigo-600" />,
-      content: "If you have any questions about this privacy policy or our privacy practices, please contact us at: privacy@skillmatch.ai"
+      content: <>If you have any questions about this privacy policy or our privacy practices, please <Link href="/contact" className="text-indigo-600 font-semibold hover:underline">contact us</Link>.</>
     }
   ];
 
@@ -50,7 +51,7 @@ export default function PrivacyPolicyPage() {
               <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Trust & Security</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">Privacy Policy</h1>
-            <p className="text-slate-500 text-lg">Last updated: February 18, 2026</p>
+            <p className="text-slate-500 text-lg">Last updated: October 2026</p>
           </div>
 
           <div className="premium-shadow border border-slate-100 rounded-3xl overflow-hidden bg-white">
@@ -78,7 +79,7 @@ export default function PrivacyPolicyPage() {
 
           <div className="mt-12 p-8 bg-slate-50 border border-slate-100 rounded-3xl text-center">
             <p className="text-slate-500 text-sm mb-0">
-              By using JobMatch AI, you agree to the collection and use of information in accordance with this policy.
+              By using SkillMatch AI, you agree to the collection and use of information in accordance with this policy.
               Review our <a href="/terms" className="text-indigo-600 font-semibold hover:underline">Terms of Service</a> for more details.
             </p>
           </div>

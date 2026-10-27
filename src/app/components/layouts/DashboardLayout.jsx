@@ -10,6 +10,8 @@ import Avatar from "../common/Avatar";
 import PageTransition from "../common/PageTransition";
 import DashboardSidebar from "../../dashboard/components/DashboardSidebar";
 import NotificationPanel from "../Notifications/NotificationPanel";
+import { useAppSelector } from "../../store/hooks";
+import { selectUnreadCount } from "../../store/notificationsSlice";
 
 export default function DashboardLayout({ children }) {
   const { user, userProfile, role: contextRole, isAuthenticated, loading: authLoading } = useAuth();
@@ -18,7 +20,9 @@ export default function DashboardLayout({ children }) {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  // Shared, app-wide polling lives in NotificationSync; the badge just reads
+  // the unread count from the notifications slice.
+  const unreadCount = useAppSelector(selectUnreadCount);
 
   useEffect(() => {
     if (authLoading) return;
@@ -26,51 +30,6 @@ export default function DashboardLayout({ children }) {
       router.push("/signin");
     }
   }, [authLoading, isAuthenticated, router]);
-
-  useEffect(() => {
-    if (!user?.uid) return;
-    let intervalId = null;
-    let cancelled = false;
-    let hadSuccess = false;
-    let failures = 0;
-
-    const fetchUnread = async () => {
-      try {
-        const res = await fetch(`/api/notifications/${user.uid}`);
-        if (!res.ok) return;
-        const json = await res.json();
-        if (json.success && json.data) setUnreadCount(json.data.unreadCount || 0);
-        hadSuccess = true;
-        failures = 0;
-      } catch { /* ignore */ }
-    };
-
-    const startPolling = () => {
-      if (intervalId) return;
-      intervalId = setInterval(fetchUnread, 30000);
-    };
-
-    const run = async () => {
-      await fetchUnread().catch(() => {});
-      if (cancelled) return;
-      if (hadSuccess) {
-        startPolling();
-        return;
-      }
-
-      // Backend may be offline (common in dev). Avoid spamming proxy errors.
-      failures += 1;
-      if (failures <= 3) {
-        setTimeout(run, 60000);
-      }
-    };
-
-    run();
-    return () => {
-      cancelled = true;
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [user?.uid]);
 
   const role = contextRole || "candidate";
   const firstName = (userProfile?.displayName || user?.displayName || "there").split(" ")[0];
@@ -111,7 +70,7 @@ export default function DashboardLayout({ children }) {
                 <Menu className="w-5 h-5" />
               </button>
               <span className="text-sm font-black text-slate-900 tracking-tight">
-                Skill<span style={{ color: "#6452F5" }}>Match</span>
+                SkillMatch<span style={{ color: "#6452F5" }}> AI</span>
               </span>
             </div>
             <div className="flex items-center gap-4">
@@ -189,7 +148,6 @@ export default function DashboardLayout({ children }) {
         uid={user?.uid}
         isOpen={notifOpen}
         onClose={() => setNotifOpen(false)}
-        setParentUnreadCount={setUnreadCount}
       />
     </div>
   );

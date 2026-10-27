@@ -1,11 +1,27 @@
 "use client";
 
-import { X, Upload, Send, FileText, CheckCircle2 } from "lucide-react";
+import { X, Send, CheckCircle2, AlertCircle, FileText, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useAuth } from "../../lib/AuthContext";
+import api from "../../lib/apiClient";
+import { usePreApplyCheckMutation } from "../../store/api/apiSlice";
 
-export default function ApplyModal({ isOpen, onClose, jobTitle, companyName }) {
+/**
+ * Real apply modal — used from the jobs list when a notification deep-link
+ * (?applyJobId=) opens a job. Mirrors the canonical apply flow:
+ *   1. POST /api/jobs/:jobId/pre-apply-check  (verification gate)
+ *   2. POST /api/jobs/:jobId/apply            ({ uid, email, jobTitle, company })
+ * No simulated submissions: success/error states reflect the actual API calls.
+ */
+export default function ApplyModal({ isOpen, onClose, jobId, jobTitle, companyName }) {
+    const { user, isAuthenticated } = useAuth();
+    const [preApplyCheck] = usePreApplyCheckMutation();
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [error, setError] = useState("");
+    const [gate, setGate] = useState(null); // { message, redirectTo? } when verification blocks applying
 
     // Prevent scroll when modal is open
     useEffect(() => {
@@ -19,20 +35,72 @@ export default function ApplyModal({ isOpen, onClose, jobTitle, companyName }) {
         };
     }, [isOpen]);
 
+    // Reset state whenever the modal is (re)opened
+    useEffect(() => {
+        if (isOpen) {
+            setIsSuccess(false);
+            setError("");
+            setGate(null);
+        }
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setError("");
+        setGate(null);
+
+        if (!isAuthenticated || !user?.uid) {
+            setError("You must be signed in to apply. Please sign in and try again.");
+            return;
+        }
+        if (!jobId) {
+            setError("This job could not be identified. Please reopen it from the jobs list.");
+            return;
+        }
+
         setIsSubmitting(true);
-        // Simulate API call
-        setTimeout(() => {
+        try {
+            // Step 1: verification gate (same check the jobs page uses)
+            const check = await preApplyCheck({ jobId, uid: user.uid }).unwrap();
+
+            if (check?._serverError) {
+                setError(check?.message || "Server error. Please try again later.");
+                return;
+            }
+
+            if (!check?.allowed) {
+                setGate({
+                    message: check?.message || "Cannot apply at this time.",
+                    redirectTo: check?.redirectTo || null,
+                });
+                return;
+            }
+
+            // Step 2: real application submission
+            const res = await api.post(`/api/jobs/${jobId}/apply`, {
+                uid: user.uid,
+                email: user.email,
+                jobTitle: jobTitle || "",
+                company: companyName || "",
+            });
+            const data = res.data;
+
+            if ((res.status === 200 || res.status === 201) && data?.success) {
+                setIsSuccess(true);
+            } else {
+                setError(data?.message || "Application failed. Please try again.");
+            }
+        } catch (err) {
+            const msg =
+                err?.response?.data?.message ||
+                err?.message ||
+                "Failed to submit application. Please try again.";
+            setError(msg);
+        } finally {
             setIsSubmitting(false);
-            setIsSuccess(true);
-            setTimeout(() => {
-                onClose();
-                setIsSuccess(false);
-            }, 2000);
-        }, 1500);
+        }
     };
 
     return (
@@ -51,7 +119,23 @@ export default function ApplyModal({ isOpen, onClose, jobTitle, companyName }) {
                             <CheckCircle2 className="w-10 h-10" />
                         </div>
                         <h2 className="text-3xl font-black text-slate-900 mb-2">Application Sent!</h2>
-                        <p className="text-slate-500 text-lg">Your profile has been shared with {companyName}.</p>
+                        <p className="text-slate-500 text-lg mb-6">
+                            Your application for {jobTitle} has been submitted to {companyName}.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <Link
+                                href="/applications"
+                                className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors text-sm"
+                            >
+                                Track My Applications
+                            </Link>
+                            <button
+                                onClick={onClose}
+                                className="px-6 py-3 border border-slate-200 rounded-xl font-bold text-slate-500 hover:bg-slate-50 transition-colors text-sm"
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <>
@@ -73,52 +157,45 @@ export default function ApplyModal({ isOpen, onClose, jobTitle, companyName }) {
 
                         {/* Form */}
                         <form onSubmit={handleSubmit} className="p-6 sm:p-10 space-y-6 sm:space-y-8 max-h-[70vh] overflow-y-auto no-scrollbar">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Full Name</label>
-                                    <input
-                                        required
-                                        type="text"
-                                        placeholder="Enter your name"
-                                        className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-600 focus:bg-white outline-none transition-all placeholder:text-slate-300 font-medium"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Email Address</label>
-                                    <input
-                                        required
-                                        type="email"
-                                        placeholder="name@email.com"
-                                        className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-600 focus:bg-white outline-none transition-all placeholder:text-slate-300 font-medium"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest leading-relaxed">Resume / Portfolio</label>
-                                <div className="border-2 border-dashed border-slate-200 rounded-[2rem] p-10 text-center hover:border-indigo-400 hover:bg-slate-50 transition-all cursor-pointer group relative">
-                                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" />
-                                    <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                                        <Upload className="w-8 h-8" />
-                                    </div>
-                                    <p className="font-bold text-slate-900">Click to upload or drag and drop</p>
-                                    <p className="text-sm text-slate-400 mt-1">PDF, DOCX up to 10MB</p>
-                                </div>
-                            </div>
-
+                            {/* Applying-as summary (from the signed-in account) */}
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Cover Letter (Optional)</label>
-                                <textarea
-                                    rows="4"
-                                    placeholder="Tell us why you are a great fit..."
-                                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-600 focus:bg-white outline-none transition-all placeholder:text-slate-300 font-medium resize-none"
-                                />
+                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Applying as</label>
+                                <div className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                                    <p className="font-bold text-slate-900 text-sm">
+                                        {user?.displayName || "Signed-in candidate"}
+                                    </p>
+                                    <p className="text-sm text-slate-400">{user?.email}</p>
+                                </div>
                             </div>
+
+                            {error && (
+                                <div className="flex items-start gap-2.5 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-medium">
+                                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                                    {error}
+                                </div>
+                            )}
+
+                            {gate && (
+                                <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl text-amber-800 text-sm font-medium">
+                                    <p className="flex items-start gap-2.5">
+                                        <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                                        {gate.message}
+                                    </p>
+                                    {gate.redirectTo && (
+                                        <Link
+                                            href={gate.redirectTo}
+                                            className="mt-3 inline-flex items-center gap-2 px-5 py-2.5 bg-amber-600 text-white rounded-xl font-bold hover:bg-amber-700 transition-colors"
+                                        >
+                                            Complete Verification <Send className="w-4 h-4" />
+                                        </Link>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="flex items-start gap-3 p-4 bg-indigo-50 rounded-2xl border border-indigo-100 text-indigo-700">
                                 <FileText className="w-5 h-5 shrink-0 mt-0.5" />
                                 <p className="text-xs font-medium leading-relaxed">
-                                    By applying, you agree to share your profile and contact information with {companyName}. We recommend double-checking your resume for the latest updates.
+                                    By applying, you agree to share your profile and contact information with {companyName}. We recommend double-checking your résumé for the latest updates.
                                 </p>
                             </div>
 
@@ -129,7 +206,10 @@ export default function ApplyModal({ isOpen, onClose, jobTitle, companyName }) {
                                     className="flex-1 py-4 sm:py-5 bg-slate-900 text-white rounded-xl sm:rounded-[1.5rem] font-black hover:bg-slate-800 transition-all active:scale-95 shadow-xl shadow-slate-200 flex items-center justify-center gap-3 disabled:opacity-50 text-sm sm:text-base"
                                 >
                                     {isSubmitting ? (
-                                        <div className="w-5 h-5 sm:w-6 sm:h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+                                        <>
+                                            <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
+                                            Submitting...
+                                        </>
                                     ) : (
                                         <>
                                             Submit Application <Send className="w-4 h-4 sm:w-5 sm:h-5" />

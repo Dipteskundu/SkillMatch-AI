@@ -22,6 +22,7 @@ import GrowthFeedbackCard from "../../components/GrowthFeedback/GrowthFeedbackCa
 import UpcomingInterviews from "./UpcomingInterviews";
 import { useScrollReveal } from "../../lib/useScrollReveal";
 import { CandidateStatusChart, ProfileCompletionChart } from "./DashboardCharts";
+import PlanCard from "./PlanCard";
 
 const STATUS_STYLES = {
   applied: "bg-blue-100 text-blue-700",
@@ -220,6 +221,9 @@ export default function CandidateDashboard({ data, loading }) {
         </div>
       </section>
 
+      {/* Phase 5 — plan + credits summary */}
+      <PlanCard />
+
       {!data?.profile?.isSkillVerified && (
       <section
         aria-labelledby="skill-test-heading"
@@ -243,10 +247,7 @@ export default function CandidateDashboard({ data, loading }) {
                 </span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Candidates with verified skills get{" "}
-                <span className="font-semibold text-foreground">
-                  4x more recruiter views.
-                </span>{" "}
+                Verified skills help recruiters trust your profile faster.{" "}
                 Takes only 10 minutes.
               </p>
               <div className="flex items-center gap-3 mt-2">
@@ -489,8 +490,8 @@ export default function CandidateDashboard({ data, loading }) {
 
             <div className="pt-4 border-t border-slate-100">
               <p className="text-xs text-muted-foreground leading-relaxed italic">
-                Candidates who keep their profile updated are 30% more likely to
-                be noticed by recruiters.
+                Keeping your profile and skills up to date makes it easier for
+                recruiters to find and evaluate you.
               </p>
             </div>
           </div>

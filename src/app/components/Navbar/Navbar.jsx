@@ -30,7 +30,9 @@ import { useAuth } from "../../lib/AuthContext";
 import { useTheme } from "../../lib/ThemeContext";
 import Avatar from "../common/Avatar";
 import NotificationPanel from "../Notifications/NotificationPanel";
-import api from "../../lib/apiClient";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { selectUnreadCount } from "../../store/notificationsSlice";
+import { setSearch } from "../../store/jobFiltersSlice";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -38,10 +40,13 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  // Shared, app-wide polling lives in NotificationSync; the badge just reads
+  // the unread count from the notifications slice.
+  const unreadCount = useAppSelector(selectUnreadCount);
   const profileRef = useRef(null);
   const pathname = usePathname();
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const { user, userProfile, role, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme, mounted } = useTheme();
 
@@ -70,54 +75,6 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (!isAuthenticated || !user?.uid) return;
-    let intervalId = null;
-    let cancelled = false;
-    let hadSuccess = false;
-    let failures = 0;
-
-    const fetchUnreadCount = async () => {
-      try {
-        const res = await api.get(`/api/notifications/${user.uid}`);
-        const json = res.data;
-        if (json.success && json.data)
-          setUnreadCount(json.data.unreadCount || 0);
-        hadSuccess = true;
-        failures = 0;
-      } catch (err) {
-        failures += 1;
-        // Avoid noisy terminal logs when the backend isn't running locally.
-        if (failures === 1 && process.env.NODE_ENV !== "production") {
-          console.warn("Backend unreachable for notifications (dev):", err?.message || err);
-        }
-      }
-    };
-
-    const startPolling = () => {
-      if (intervalId) return;
-      intervalId = setInterval(fetchUnreadCount, 30000);
-    };
-
-    const run = async () => {
-      await fetchUnreadCount().catch(() => {});
-      if (cancelled) return;
-      if (hadSuccess) {
-        startPolling();
-        return;
-      }
-      if (failures <= 3) {
-        setTimeout(run, 60000);
-      }
-    };
-
-    run();
-    return () => {
-      cancelled = true;
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [isAuthenticated, user?.uid]);
-
   let profileRoleLabel = "Candidate";
   if (role === "admin") {
       profileRoleLabel = "Admin";
@@ -129,6 +86,7 @@ export default function Navbar() {
     { name: "Home", href: "/", icon: Home },
     { name: "Find Jobs", href: "/jobs", icon: Briefcase },
     { name: "Companies", href: "/companies", icon: Building2 },
+    { name: "Pricing", href: "/pricing", icon: Zap },
     { name: "About Us", href: "/about", icon: Info },
   ];
 
@@ -230,7 +188,9 @@ export default function Navbar() {
   const submitSearch = (q) => {
     const term = (q || searchQuery || "").trim();
     if (!term) return;
-    // Navigate to jobs page with search param
+    // Seed the shared jobs filter (persisted in the store), then navigate to
+    // the jobs page with the search param so the URL stays shareable.
+    dispatch(setSearch(term));
     router.push(`/jobs?search=${encodeURIComponent(term)}`);
     setSearchQuery("");
     setSearchOpen(false);
@@ -258,7 +218,7 @@ export default function Navbar() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
               <span className="text-[17px] font-black text-slate-900 tracking-tight">
-                JobMatch<span className="text-indigo-600">AI</span>
+                SkillMatch<span className="text-indigo-600">AI</span>
               </span>
             </Link>
 
@@ -686,7 +646,6 @@ export default function Navbar() {
         uid={user?.uid}
         isOpen={notifOpen}
         onClose={() => setNotifOpen(false)}
-        setParentUnreadCount={setUnreadCount}
       />
     </>
   );

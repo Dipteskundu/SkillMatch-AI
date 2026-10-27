@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Rocket, Mail, Lock, User, Eye, EyeOff, Github, Chrome, CheckCircle2, ArrowLeft, Briefcase, Building2 } from "lucide-react";
+import { Rocket, Mail, Lock, User, Eye, EyeOff, Github, Chrome, CheckCircle2, ArrowLeft, Briefcase, Building2, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { auth, googleProvider, firebaseClientStatus } from "../lib/firebaseClient";
 import { createUserWithEmailAndPassword, signInWithPopup, updateProfile } from "firebase/auth";
-import api, { API_BASE } from "../lib/apiClient";
+import api from "../lib/apiClient";
 import { safeError } from "../lib/logger";
 import { useAuth } from "../lib/AuthContext";
+import { setAuthSessionCookies } from "../lib/sessionCookie";
 
 function normalizeAuthError(err) {
     const code = String(err?.code || "").toLowerCase();
@@ -24,6 +25,17 @@ function normalizeAuthError(err) {
     return message || "Authentication failed";
 }
 
+/**
+ * Only honor same-origin relative paths (?redirect=/jobs/xyz) to avoid
+ * open redirects. Anything else falls back to the landing page.
+ */
+function getPostSignUpRedirect() {
+    if (typeof window === "undefined") return "/";
+    const param = new URLSearchParams(window.location.search).get("redirect");
+    if (param && param.startsWith("/") && !param.startsWith("//")) return param;
+    return "/";
+}
+
 export default function SignUpPage() {
     const [mounted, setMounted] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +49,6 @@ export default function SignUpPage() {
     const { refreshUser } = useAuth();
     const router = useRouter();
 
-    const apiBase = API_BASE;
     const firebaseDisabled = !auth;
     const firebaseReason = !firebaseClientStatus.configured
         ? "missing-config"
@@ -96,7 +107,8 @@ export default function SignUpPage() {
                 role
             );
 
-            router.push("/");
+            setAuthSessionCookies(role);
+            router.push(getPostSignUpRedirect());
         } catch (err) {
             safeError("Email sign up error", err);
             setError(err.message || "Failed to create account");
@@ -120,7 +132,8 @@ export default function SignUpPage() {
         try {
             const cred = await signInWithPopup(auth, googleProvider);
             await syncUserWithBackend(cred.user, role);
-            router.push("/");
+            setAuthSessionCookies(role);
+            router.push(getPostSignUpRedirect());
         } catch (err) {
             safeError("Google sign up error", err);
             setError(normalizeAuthError(err));
@@ -157,7 +170,7 @@ export default function SignUpPage() {
                             <Rocket className="w-6 h-6" />
                         </div>
                         <span className="text-2xl font-black text-white tracking-tight">
-                            JobMatch<span className="text-indigo-200">AI</span>
+                            SkillMatch<span className="text-indigo-200">AI</span>
                         </span>
                     </Link>
                 </div>
@@ -170,10 +183,10 @@ export default function SignUpPage() {
 
                     <div className="space-y-6">
                         {[
-                            "Personalized AI job matching",
-                            "Direct connection with top recruiters",
-                            "Real-time salary market insights",
-                            "Expert career growth resources"
+                            "Résumé-based skill extraction",
+                            "Structured skill assessments",
+                            "Explainable job matches",
+                            "Skill-gap analysis for every role"
                         ].map((feature, i) => (
                             <div key={i} className="flex items-center gap-4 text-white/90">
                                 <CheckCircle2 className="w-6 h-6 text-indigo-300" />
@@ -184,14 +197,16 @@ export default function SignUpPage() {
                 </div>
 
                 <div className="relative z-10 p-8 bg-white/10 backdrop-blur-md rounded-[2rem] border border-white/20">
-                    <p className="text-white text-lg font-medium italic mb-4">
-                        &quot;JobMatch AI helped me land my Senior Product Designer role in less than 2 weeks. The AI suggestions were spot on!&quot;
+                    <p className="text-white text-lg font-medium mb-4">
+                        Skill-first matching: candidates prove their abilities with assessments, and every match comes with a skill-gap report.
                     </p>
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-white/20 rounded-full"></div>
+                        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                            <ShieldCheck className="w-5 h-5 text-white" />
+                        </div>
                         <div>
-                            <p className="text-sm font-bold text-white uppercase tracking-wider">Sarah Jenkins</p>
-                            <p className="text-xs text-indigo-200 font-bold uppercase">Senior Designer @ Meta</p>
+                            <p className="text-sm font-bold text-white uppercase tracking-wider">Verified skills</p>
+                            <p className="text-xs text-indigo-200 font-bold uppercase">Assessed, not self-reported</p>
                         </div>
                     </div>
                 </div>
@@ -291,7 +306,7 @@ export default function SignUpPage() {
                         <div className="flex items-center gap-3">
                             <input type="checkbox" className="w-5 h-5 rounded border-slate-200 text-indigo-600 focus:ring-indigo-500" />
                             <p className="text-sm text-slate-500 font-medium">
-                                I agree to the <Link href="#" className="font-bold text-slate-900 underline underline-offset-4">Terms</Link> and <Link href="#" className="font-bold text-slate-900 underline underline-offset-4">Privacy Policy</Link>
+                                I agree to the <Link href="/terms" className="font-bold text-slate-900 underline underline-offset-4">Terms</Link> and <Link href="/privacy" className="font-bold text-slate-900 underline underline-offset-4">Privacy Policy</Link>
                             </p>
                         </div>
 

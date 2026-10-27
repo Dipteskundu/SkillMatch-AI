@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useAuth } from "../lib/AuthContext";
 import Navbar from "../components/Navbar/Navbar";
 import Footer from "../components/Footer/Footer";
@@ -17,37 +16,27 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import PageWrapper from "../components/common/PageWrapper";
-import api, { API_BASE } from "../lib/apiClient";
+import {
+  useGetSavedJobsQuery,
+  useUnsaveJobMutation,
+} from "../store/api/apiSlice";
 
 export default function SavedJobsPage() {
   const { user, isAuthenticated } = useAuth();
-  const [savedJobs, setSavedJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data, isError } = useGetSavedJobsQuery(user?.uid, {
+    skip: !user?.uid,
+  });
+  const [unsaveJob] = useUnsaveJobMutation();
 
-  useEffect(() => {
-    if (!user?.uid) return;
-
-    const fetchSavedJobs = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get(`/api/jobs/saved/${user.uid}`);
-        const json = res.data;
-        if (json.success) {
-          setSavedJobs(json.data);
-        } else {
-          setError(json.message);
-        }
-      } catch (err) {
-        console.error("Fetch saved jobs error:", err);
-        setError("Failed to load saved jobs.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSavedJobs();
-  }, [user?.uid]);
+  // apiClient resolves HTTP 500s into `{ success: false }` bodies.
+  const error = isError
+    ? "Failed to load saved jobs."
+    : data && !data.success
+      ? data.message
+      : null;
+  const savedJobs = data?.success ? data.data || [] : [];
+  // Skeleton until the query settles (mirrors the old local loading state).
+  const loading = !data && !isError;
 
   const handleUnsave = async (savedId) => {
     if (
@@ -56,13 +45,12 @@ export default function SavedJobsPage() {
       return;
 
     try {
-      const res = await api.delete(`/api/jobs/saved/${savedId}`);
-      const json = res.data;
-      if (json.success) {
-        setSavedJobs((prev) => prev.filter((job) => job._id !== savedId));
-      } else {
-        alert("Failed to unsave job: " + json.message);
+      const res = await unsaveJob(savedId);
+      if (res.error) throw res.error;
+      if (!res.data?.success) {
+        alert("Failed to unsave job: " + (res.data?.message || ""));
       }
+      // On success the ['savedJobs'] tag invalidation refetches the list.
     } catch (err) {
       console.error("Unsave error:", err);
       alert("An error occurred while unsaving.");

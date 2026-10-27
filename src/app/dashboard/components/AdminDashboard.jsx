@@ -99,15 +99,8 @@ export default function AdminDashboard({ user, data, loading }) {
         }
     };
 
-    const growthData = data?.growth || [
-        { month: "Jan", users: 400 },
-        { month: "Feb", users: 600 },
-        { month: "Mar", users: 800 },
-        { month: "Apr", users: 950 },
-        { month: "May", users: 1100 },
-        { month: "Jun", users: 1350 },
-    ];
-    const maxUsers = Math.max(...growthData.map(d => d.users));
+    const growthData = data?.growth || [];
+    const maxUsers = Math.max(1, ...growthData.map(d => d.users));
 
     const ROLE_BADGE = {
         admin:     "bg-amber-100 text-amber-700",
@@ -281,6 +274,11 @@ export default function AdminDashboard({ user, data, loading }) {
                             <BarChart2 className="w-4 h-4 text-indigo-500" aria-hidden="true" />
                             Platform Growth
                         </h3>
+                        {growthData.length === 0 ? (
+                            <p className="h-28 flex items-center justify-center text-xs text-slate-400 text-center">
+                                Not enough activity yet — charts appear once there are dated signups and jobs to chart.
+                            </p>
+                        ) : (
                         <div className="flex items-end justify-between gap-1.5 h-28" role="img" aria-label="Monthly user growth chart">
                             {growthData.map(({ month, users }) => (
                                 <div key={month} className="flex flex-col items-center gap-1 flex-1">
@@ -297,26 +295,21 @@ export default function AdminDashboard({ user, data, loading }) {
                                 </div>
                             ))}
                         </div>
+                        )}
                     </div>
 
-                    {/* Fraud Alerts */}
-                    <div className="bg-amber-50 rounded-2xl border border-amber-200 p-6">
-                        <h3 className="font-bold text-amber-900 mb-4 flex items-center gap-2 text-sm">
-                            <AlertTriangle className="w-4 h-4 text-amber-500" aria-hidden="true" />
-                            Fraud Alerts
+                    {/* Fraud & abuse review — honest state (no automated fraud
+                        detection runs today; never show invented alerts) */}
+                    <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                        <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2 text-sm">
+                            <AlertTriangle className="w-4 h-4 text-indigo-500" aria-hidden="true" />
+                            Fraud &amp; Abuse Review
                         </h3>
-                        <ul role="list" className="space-y-2">
-                            {[
-                                { msg: "2 duplicate job posts detected", severity: "medium" },
-                                { msg: "1 suspicious account flagged", severity: "high" },
-                            ].map((alert, i) => (
-                                <li key={i} className={`flex items-center gap-2.5 p-3 rounded-xl text-xs font-medium text-slate-700 ${alert.severity === "high" ? "bg-red-100" : "bg-amber-100"}`}>
-                                    <span className={`w-2 h-2 rounded-full shrink-0 ${alert.severity === "high" ? "bg-red-500" : "bg-amber-500"}`} aria-hidden="true" />
-                                    {alert.msg}
-                                </li>
-                            ))}
-                        </ul>
-                        <p className="text-xs text-amber-600 mt-3">AI-powered detection. Manual review advised.</p>
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                            No automated fraud detection is running at this time. User reports and
+                            moderation flags will be listed here once moderation tooling ships.
+                            Admins review flagged jobs and accounts manually via the jobs queue.
+                        </p>
                     </div>
 
                     {/* Quick Actions */}
@@ -326,8 +319,9 @@ export default function AdminDashboard({ user, data, loading }) {
                             <ul className="space-y-1">
                                 {[
                                     { label: "View All Users",     href: "/admin/users" },
-                                    { label: "Manage Job Posts",   href: "/admin/jobs" },
-                                    
+                                    { label: "Manage Job Posts",   href: "/admin/pending-approvals" },
+                                    { label: "Bias & Fairness",    href: "/admin/bias-metrics" },
+                                    { label: "Public API Keys",    href: "/admin/api-keys" },
                                 ].map(({ label, href }) => (
                                     <li key={label}>
                                         <a

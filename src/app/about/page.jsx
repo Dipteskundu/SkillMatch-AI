@@ -2,7 +2,7 @@
 
 import Navbar from "../components/Navbar/Navbar";
 import Footer from "../components/Footer/Footer";
-import { Rocket, Target, Users, Shield, Zap, Globe, Heart, Award, ChevronRight } from "lucide-react";
+import { Target, Shield, Zap, Globe, Heart, Award, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import PageWrapper from "../components/common/PageWrapper";
 
@@ -21,7 +21,7 @@ export default function AboutPage() {
                             <span className="text-indigo-600">future of hiring.</span>
                         </h1>
                         <p className="text-lg sm:text-xl text-slate-500 leading-relaxed max-w-2xl">
-                            JobMatch AI was founded on a simple belief: the right job can change a life, and the right talent can change the world. We use cutting-edge AI to make those connections happen faster and more accurately than ever before.
+                            SkillMatch AI was founded on a simple belief: the right job can change a life, and the right talent can change the world. We use AI to make those connections happen faster and more accurately.
                         </p>
                     </div>
                 </section>
@@ -41,12 +41,7 @@ export default function AboutPage() {
                                     </p>
                                 </div>
                                 <div className="mt-8 sm:mt-12 flex items-center gap-4">
-                                    <div className="flex -space-x-3">
-                                        {[1, 2, 3].map((i) => (
-                                            <div key={i} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-slate-900 bg-slate-800"></div>
-                                        ))}
-                                    </div>
-                                    <p className="text-[10px] sm:text-sm font-bold text-slate-500 uppercase tracking-widest">Trusted by 5,000+ Teams</p>
+                                    <p className="text-[10px] sm:text-sm font-bold text-slate-500 uppercase tracking-widest">Built for candidates and recruiters</p>
                                 </div>
                             </div>
                             {/* Decorative elements */}
@@ -60,19 +55,15 @@ export default function AboutPage() {
                                 </div>
                                 <h2 className="text-3xl font-bold text-slate-900 mb-6">Global Impact</h2>
                                 <p className="text-slate-500 leading-relaxed">
-                                    Breaking down geographical barriers to talent. Whether you&apos;re in San Francisco or Singapore, we find the best match for you.
+                                    Breaking down geographical barriers to talent. Whether you&apos;re in San Francisco or Singapore, we help you find the best match.
                                 </p>
-                            </div>
-                            <div className="mt-8 pt-8 border-t border-slate-50">
-                                <span className="text-4xl font-black text-indigo-600">150+</span>
-                                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Countries Served</p>
                             </div>
                         </div>
                     </div>
                 </section>
 
                 {/* Core Values */}
-                <section className="bg-slate-50 py-20 sm:py-32 border-y border-slate-100 reveal">
+                <section id="values" className="bg-slate-50 py-20 sm:py-32 border-y border-slate-100 reveal">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div className="text-center max-w-2xl mx-auto mb-20">
                             <h2 className="text-4xl font-black text-slate-900 mb-6 font-sans tracking-tight">Values that drive us</h2>
@@ -128,32 +119,34 @@ export default function AboutPage() {
                         <div className="relative z-10 flex-1">
                             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-6 sm:mb-8 leading-tight">
                                 Join our mission to <br className="hidden sm:block" />
-                                <span className="text-indigo-200">empower millions.</span>
+                                <span className="text-indigo-200">change how hiring works.</span>
                             </h2>
                             <p className="text-indigo-100 text-lg sm:text-xl leading-relaxed mb-8 sm:mb-10 max-w-xl mx-auto lg:mx-0">
                                 We&apos;re always looking for brilliant minds to help us build the next generation of HR technology. Ready to make an impact?
                             </p>
                             <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                                <button className="px-8 sm:px-10 py-4 sm:py-5 bg-white text-indigo-600 rounded-2xl font-black hover:bg-slate-50 transition-all premium-shadow flex items-center gap-2 text-sm sm:text-base">
+                                <Link href="/jobs" className="px-8 sm:px-10 py-4 sm:py-5 bg-white text-indigo-600 rounded-2xl font-black hover:bg-slate-50 transition-all premium-shadow flex items-center gap-2 text-sm sm:text-base">
                                     View Career Openings <ChevronRight className="w-4 h-4" />
-                                </button>
-                                <button className="px-8 sm:px-10 py-4 sm:py-5 border-2 border-indigo-400 text-white rounded-2xl font-black hover:bg-indigo-500 transition-all text-sm sm:text-base">
+                                </Link>
+                                <Link href="/about#values" className="px-8 sm:px-10 py-4 sm:py-5 border-2 border-indigo-400 text-white rounded-2xl font-black hover:bg-indigo-500 transition-all text-sm sm:text-base">
                                     Our Culture
-                                </button>
+                                </Link>
                             </div>
                         </div>
 
                         <div className="relative z-10 w-full lg:w-1/3">
                             <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 sm:p-10 rounded-3xl sm:rounded-[3rem] text-left">
                                 <div className="flex items-center gap-4 mb-6 sm:mb-8">
-                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full"></div>
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center">
+                                        <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
+                                    </div>
                                     <div>
-                                        <p className="text-white font-bold text-sm sm:text-base">Alex Rivera</p>
-                                        <p className="text-indigo-200 text-xs sm:text-sm">CEO & Founder</p>
+                                        <p className="text-white font-bold text-sm sm:text-base">Our promise</p>
+                                        <p className="text-indigo-200 text-xs sm:text-sm">Skill-first, always</p>
                                     </div>
                                 </div>
-                                <p className="text-white/80 text-sm sm:text-base leading-relaxed italic">
-                                    &quot;The talent landscape is changing. We&apos;re here to ensure no opportunity goes missed and no skill goes unrewarded.&quot;
+                                <p className="text-white/80 text-sm sm:text-base leading-relaxed">
+                                    Every candidate is judged by demonstrated ability, and every match score comes with an explanation you can review.
                                 </p>
                             </div>
                         </div>

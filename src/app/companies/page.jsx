@@ -464,8 +464,8 @@ export default function CompaniesPage() {
                   Hiring for your team?
                 </h2>
                 <p className="text-indigo-100 text-base sm:text-lg max-w-xl leading-relaxed">
-                  Join 5,000+ companies using our platform to find world-class
-                  talent and build amazing products.
+                  Post your roles, review skill-verified candidates, and build
+                  your team — all in one place.
                 </p>
               </div>
               <div className="relative z-10 flex flex-wrap gap-4 w-full md:w-auto">
@@ -475,9 +475,12 @@ export default function CompaniesPage() {
                 >
                   Post a Job
                 </Link>
-                <button className="flex-1 md:flex-none px-8 py-4 border-2 border-indigo-400 rounded-2xl font-black hover:bg-indigo-500 transition-colors whitespace-nowrap">
-                  Contact Sales
-                </button>
+                <Link
+                  href="/contact"
+                  className="flex-1 md:flex-none text-center px-8 py-4 border-2 border-indigo-400 rounded-2xl font-black hover:bg-indigo-500 transition-colors whitespace-nowrap"
+                >
+                  Contact us
+                </Link>
               </div>
               <div className="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white rounded-full blur-[120px]" />

@@ -23,6 +23,13 @@ import { useScrollReveal } from "../../lib/useScrollReveal";
 import { RecruiterPipelineChart, RecruiterJobsChart } from "./DashboardCharts";
 import api, { API_BASE } from "../../lib/apiClient";
 import { devLog, safeError } from "../../lib/logger";
+import {
+  FACTOR_LABELS,
+  DEFAULT_WEIGHTS,
+  applicationScore,
+  scoreBand,
+  topContributors,
+} from "../../lib/scoreDisplay";
 
 function StatCard({ label, value, icon: Icon, color, bg }) {
   return (
@@ -218,6 +225,30 @@ export default function RecruiterDashboard({ user, data, loading }) {
     window.location.href = `mailto:${email}`;
   };
 
+  /* ── Explainable ranking data ──────────────────────────────────────
+   * topCandidates is pre-sorted by aiScore.total (desc) on the backend.
+   * Weights come from the first application that actually carries them,
+   * so the card always reflects the real scoring formula; otherwise we
+   * show the documented fit-v1 defaults. */
+  const topCandidates = Array.isArray(data?.topCandidates) ? data.topCandidates : [];
+  const weightSourceApps = [
+    ...topCandidates,
+    ...(Array.isArray(data?.recentApplications) ? data.recentApplications : []),
+  ];
+  const liveWeightsApp = weightSourceApps.find(
+    (a) => a?.aiScore?.weights && typeof a.aiScore.weights === "object",
+  );
+  const rankingWeightMap = liveWeightsApp?.aiScore?.weights || DEFAULT_WEIGHTS;
+  const weightRows = Object.entries(FACTOR_LABELS)
+    .map(([factor, label]) => ({
+      factor,
+      label,
+      pct: rankingWeightMap[factor] ?? DEFAULT_WEIGHTS[factor] ?? 0,
+    }))
+    .filter((row) => row.pct > 0)
+    .sort((a, b) => b.pct - a.pct);
+  const weightColors = ["bg-indigo-500", "bg-blue-500", "bg-cyan-500", "bg-violet-500", "bg-emerald-500"];
+
   const handleStatusChange = async (appId, newStatus) => {
     let feedback = null;
     if (newStatus === "rejected") {
@@ -269,8 +300,98 @@ export default function RecruiterDashboard({ user, data, loading }) {
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Applicants */}
-        <div className="lg:col-span-2 space-y-4">
+        {/* Main column: Top Candidates + Recent Applicants */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Top Candidates — explainable AI scores */}
+          {topCandidates.length > 0 && (
+            <section aria-labelledby="top-candidates-heading">
+              <h2
+                id="top-candidates-heading"
+                className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-4"
+              >
+                <Star className="w-5 h-5 text-amber-500" aria-hidden="true" />
+                Top Candidates
+                <span className="text-xs font-semibold text-slate-400 ml-1">
+                  ranked by match score
+                </span>
+              </h2>
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <ul role="list" className="divide-y divide-slate-100">
+                  {topCandidates.map((app, i) => {
+                    const score = applicationScore(app);
+                    const band = scoreBand(score);
+                    const contributors = topContributors(app?.aiScore, 2);
+                    const comm =
+                      typeof app?.communicationScore === "number"
+                        ? app.communicationScore
+                        : null;
+                    const name =
+                      app?.displayName || app?.email?.split("@")[0] || "Candidate";
+                    return (
+                      <li key={app?._id || i}>
+                        <Link
+                          href="/applicants"
+                          className="flex items-center gap-3 px-5 py-4 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-400"
+                          title={`See ${name}'s full score breakdown`}
+                        >
+                          <span
+                            className="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center font-black text-slate-500 text-xs shrink-0"
+                            aria-hidden="true"
+                          >
+                            {i + 1}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-slate-800 text-sm truncate">
+                              {name}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-0.5 truncate">
+                              {app?.jobTitle || "Application"}
+                              {app?.company ? ` — ${app.company}` : ""}
+                            </p>
+                            {contributors.length > 0 && (
+                              <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                                Top factors:{" "}
+                                {contributors
+                                  .map((c) => `${c.label} ${c.score}`)
+                                  .join(" · ")}
+                              </p>
+                            )}
+                          </div>
+                          {score !== null ? (
+                            <span
+                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-black border shrink-0 ${band.className}`}
+                              title={`Match score ${score} out of 100`}
+                            >
+                              {score}
+                            </span>
+                          ) : comm !== null ? (
+                            <span
+                              className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border shrink-0 text-slate-500 bg-slate-50 border-slate-200"
+                              title="This candidate has not been match-scored yet."
+                            >
+                              Communication: {comm}
+                            </span>
+                          ) : (
+                            <span
+                              className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border shrink-0 text-slate-400 bg-slate-50 border-slate-200"
+                            >
+                              Not scored yet
+                            </span>
+                          )}
+                          <ChevronRight
+                            className="w-4 h-4 text-slate-300 shrink-0"
+                            aria-hidden="true"
+                          />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </section>
+          )}
+
+          {/* Recent Applicants */}
           <section aria-labelledby="applicants-heading">
             <h2
               id="applicants-heading"
@@ -355,19 +476,20 @@ export default function RecruiterDashboard({ user, data, loading }) {
 
         {/* Sidebar */}
         <aside className="space-y-5" aria-label="Recruiter tools">
-          {/* Hiring Score */}
+          {/* How candidates are ranked — honest, from real API weights */}
           <div className="bg-slate-900 rounded-2xl p-6 text-white">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-1">
               <Star className="w-5 h-5 text-amber-400" aria-hidden="true" />
-              <h3 className="font-bold text-sm">AI Hiring Score Formula</h3>
+              <h3 className="font-bold text-sm">How candidates are ranked</h3>
             </div>
+            <p className="text-slate-500 text-[11px] mb-4">
+              {liveWeightsApp
+                ? "Live weights from your current scoring model (fit-v1)."
+                : "Standard scoring weights (fit-v1). Live weights appear once candidates are scored."}
+            </p>
             <div className="space-y-3">
-              {[
-                { label: "Skill Match", pct: 50, color: "bg-indigo-500" },
-                { label: "Test Score", pct: 30, color: "bg-blue-500" },
-                { label: "Experience", pct: 20, color: "bg-cyan-500" },
-              ].map(({ label, pct, color }) => (
-                <div key={label}>
+              {weightRows.map(({ factor, label, pct }, i) => (
+                <div key={factor}>
                   <div className="flex justify-between text-xs font-medium mb-1.5">
                     <span className="text-slate-400">{label}</span>
                     <span className="text-white font-bold">{pct}%</span>
@@ -381,7 +503,7 @@ export default function RecruiterDashboard({ user, data, loading }) {
                     aria-label={`${label}: ${pct}%`}
                   >
                     <div
-                      className={`h-full ${color} rounded-full`}
+                      className={`h-full ${weightColors[i % weightColors.length]} rounded-full`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -389,8 +511,15 @@ export default function RecruiterDashboard({ user, data, loading }) {
               ))}
             </div>
             <p className="text-slate-500 text-xs mt-4">
-              Candidates are ranked by our AI model using this formula.
+              Every score is explainable — click a candidate to see their
+              breakdown.
             </p>
+            <Link
+              href="/about"
+              className="inline-block text-indigo-400 text-xs font-semibold mt-2 hover:text-indigo-300 hover:underline focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded"
+            >
+              Learn how scoring works →
+            </Link>
           </div>
 
           {/* Active Jobs */}

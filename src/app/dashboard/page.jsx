@@ -12,6 +12,8 @@ import DashboardSidebar from "./components/DashboardSidebar";
 import NotificationPanel from "../components/Notifications/NotificationPanel";
 import api from "../lib/apiClient";
 import { useTheme } from "../lib/ThemeContext";
+import { useAppSelector } from "../store/hooks";
+import { selectUnreadCount } from "../store/notificationsSlice";
 
 const ROLE_CONFIG = {
     candidate: {
@@ -43,7 +45,9 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [notifOpen, setNotifOpen] = useState(false);
-    const [unreadCount, setUnreadCount] = useState(0);
+    // Shared, app-wide polling lives in NotificationSync; the badge just
+    // reads the unread count from the notifications slice.
+    const unreadCount = useAppSelector(selectUnreadCount);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { theme, toggleTheme, mounted } = useTheme();
 
@@ -72,48 +76,6 @@ export default function Dashboard() {
 
         fetchDashboardData();
     }, [user?.uid, role, authLoading]);
-
-    useEffect(() => {
-        if (!user?.uid) return;
-        let intervalId = null;
-        let cancelled = false;
-        let hadSuccess = false;
-        let failures = 0;
-
-        const fetchUnread = async () => {
-            try {
-                const res = await api.get(`/api/notifications/${user.uid}`);
-                const json = res.data;
-                if (json.success && json.data) setUnreadCount(json.data.unreadCount || 0);
-                hadSuccess = true;
-                failures = 0;
-            } catch { /* ignore */ }
-        };
-
-        const startPolling = () => {
-          if (intervalId) return;
-          intervalId = setInterval(fetchUnread, 30000);
-        };
-
-        const run = async () => {
-          await fetchUnread().catch(() => {});
-          if (cancelled) return;
-          if (hadSuccess) {
-            startPolling();
-            return;
-          }
-          failures += 1;
-          if (failures <= 3) {
-            setTimeout(run, 60000);
-          }
-        };
-
-        run();
-        return () => {
-          cancelled = true;
-          if (intervalId) clearInterval(intervalId);
-        };
-    }, [user?.uid]);
 
     if (!isAuthenticated) {
         return (
@@ -169,7 +131,7 @@ export default function Dashboard() {
                                 <Menu className="w-5 h-5" />
                             </button>
                             <span className="text-sm font-black text-slate-900 tracking-tight">
-                                Skill<span style={{ color: "#6452F5" }}>Match</span>
+                                SkillMatch<span style={{ color: "#6452F5" }}> AI</span>
                             </span>
                         </div>
 
@@ -305,7 +267,6 @@ export default function Dashboard() {
                 uid={user?.uid}
                 isOpen={notifOpen}
                 onClose={() => setNotifOpen(false)}
-                setParentUnreadCount={setUnreadCount}
             />
         </div>
     );

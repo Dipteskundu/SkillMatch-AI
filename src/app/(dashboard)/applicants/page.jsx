@@ -5,12 +5,14 @@ import { useAuth } from "../../lib/AuthContext";
 import api, { API_BASE } from "../../lib/apiClient";
 import {
   Users, User, SlidersHorizontal, Star, X, Loader2,
-  ChevronLeft, ChevronRight, BadgeCheck, MoreVertical,
+  ChevronLeft, ChevronRight, BadgeCheck, MoreVertical, Target,
 } from "lucide-react";
 import Link from "next/link";
 import PipelineLayout from "../../components/PipelineLayout/PipelineLayout";
 import InterviewScheduler from "../../components/InterviewScheduler/InterviewScheduler";
 import Avatar from "../../components/common/Avatar";
+import FitMapModal from "../../components/FitMap/FitMapModal";
+import { applicationScore, scoreBand } from "../../lib/scoreDisplay";
 
 const PAGE_SIZE = 7;
 
@@ -28,11 +30,7 @@ const STATUS_META = {
   rejected:            { label: "Rejected",            color: "text-red-600",      bg: "bg-red-50",       border: "border-red-200" },
 };
 
-const matchColor = (score) => {
-  if (score >= 80) return "text-emerald-600 bg-emerald-50 border-emerald-200";
-  if (score >= 50) return "text-amber-600 bg-amber-50 border-amber-200";
-  return "text-slate-500 bg-slate-100 border-slate-200";
-};
+const matchColor = (score) => scoreBand(score).className;
 
 export default function ApplicantsPage() {
   const { user, isAuthenticated } = useAuth();
@@ -42,6 +40,7 @@ export default function ApplicantsPage() {
   const [minMatch, setMinMatch] = useState(0);
   const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [fitApplicant, setFitApplicant] = useState(null);
 
   const [showInterviewScheduler, setShowInterviewScheduler] = useState(false);
   const [selectedApplicantForInterview, setSelectedApplicantForInterview] = useState(null);
@@ -88,9 +87,12 @@ export default function ApplicantsPage() {
 
   const filteredApplicants = applicants.filter(app => {
     const q = searchTerm.toLowerCase();
+    // New shape: aiScore.total; legacy: numeric aiScore or matchScore.
+    // Unscored candidates (null) only pass when the filter is at 0.
+    const score = applicationScore(app) ?? 0;
     return (
       (app.email?.toLowerCase().includes(q) || app.jobTitle?.toLowerCase().includes(q) || app.displayName?.toLowerCase().includes(q)) &&
-      (app.aiScore || 0) >= minMatch
+      score >= minMatch
     );
   });
 
@@ -151,7 +153,7 @@ export default function ApplicantsPage() {
         <>
           <div className="space-y-2">
             {paginated.map(applicant => {
-              const score = applicant.aiScore || 0;
+              const score = applicationScore(applicant);
               const sm = STATUS_META[applicant.status] || STATUS_META.submitted;
               const isPast = ["task_sent","task_accepted","task_submitted","interview_selected","interviewing","interview_completed","final_selected","hired"].includes(applicant.status);
               const isRejected = applicant.status === "rejected";
@@ -189,17 +191,31 @@ export default function ApplicantsPage() {
                         <p className="text-xs text-slate-400 font-medium truncate">{applicant.jobTitle || "Applicant"}</p>
                         {/* Match % visible on mobile only */}
                         <span className={`sm:hidden inline-flex items-center mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-black border ${matchColor(score)}`}>
-                          {score}% match
+                          {score !== null ? `${score}% match` : "Not scored"}
                         </span>
                       </div>
                     </Link>
 
                     {/* RIGHT: Match % + Toggle + Menu */}
                     <div className="flex items-center gap-2 shrink-0 ml-auto">
-                      {/* AI Match */}
-                      <span className={`hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-black border ${matchColor(score)}`}>
-                        AI MATCH <span className="ml-1">{score}%</span>
-                      </span>
+                      {/* Explainable match score — click to open the Fit Map */}
+                      {applicant.jobId && applicant.firebaseUid ? (
+                        <button
+                          onClick={e => { e.stopPropagation(); setFitApplicant(applicant); }}
+                          title="See this candidate's fit breakdown"
+                          className={`hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-black border transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-indigo-400 ${matchColor(score)}`}
+                        >
+                          {score !== null ? (
+                            <>MATCH <span className="ml-1">{score}%</span></>
+                          ) : (
+                            <>NOT SCORED</>
+                          )}
+                        </button>
+                      ) : (
+                        <span className={`hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-black border ${matchColor(score)}`}>
+                          {score !== null ? <>MATCH <span className="ml-1">{score}%</span></> : <>NOT SCORED</>}
+                        </span>
+                      )}
 
                       {/* 3-state toggle: only for pending candidates */}
                       {!isPast && !isRejected && !isShortlisted ? (
@@ -271,6 +287,12 @@ export default function ApplicantsPage() {
                                 <div className="border-t border-slate-100 my-1" />
                               </>
                             )}
+                            {applicant.jobId && applicant.firebaseUid && (
+                              <button onClick={() => { setFitApplicant(applicant); setOpenMenuId(null); }}
+                                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors">
+                                <Target className="w-4 h-4" /> View Fit Map
+                              </button>
+                            )}
                             <Link href={`/profile/${applicant.firebaseUid}`}
                               className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                               onClick={() => setOpenMenuId(null)}>
@@ -314,6 +336,15 @@ export default function ApplicantsPage() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Fit Map — recruiter view of a candidate's explainable fit (uid = candidate) */}
+      {fitApplicant && (
+        <FitMapModal
+          job={{ _id: fitApplicant.jobId, title: fitApplicant.jobTitle, company: fitApplicant.company }}
+          uid={fitApplicant.firebaseUid}
+          onClose={() => setFitApplicant(null)}
+        />
       )}
 
       {/* Interview Scheduler */}

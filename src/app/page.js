@@ -4,12 +4,12 @@ import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer/Footer";
 import Link from "next/link";
 import {
-  Activity,
-  AlertTriangle,
   ArrowRight,
   Brain,
   CheckCircle2,
   ChevronDown,
+  ClipboardCheck,
+  FileText,
   PartyPopper,
   Search,
   ShieldCheck,
@@ -21,96 +21,55 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import React, { useState, useEffect, useRef } from "react";
-import ApplyModal from "./components/form/ApplyModal";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "./lib/AuthContext";
 
-/* ─── Animated counter hook ───────────────────────────────────────────── */
-function useCountUp(target, duration = 1800, startOnView = true) {
-  const [count, setCount] = useState(0);
-  const [started, setStarted] = useState(!startOnView);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    if (!startOnView) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setStarted(true); },
-      { threshold: 0.3 }
-    );
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, [startOnView]);
-
-  useEffect(() => {
-    if (!started) return;
-    let start = null;
-    const step = (ts) => {
-      if (!start) start = ts;
-      const prog = Math.min((ts - start) / duration, 1);
-      const ease = 1 - Math.pow(1 - prog, 3);
-      setCount(Math.floor(ease * target));
-      if (prog < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, [started, target, duration]);
-
-  return { count, ref };
-}
-
 /* ─── Static data ──────────────────────────────────────────────────────── */
-const PARTNERS = [
-  "Stripe", "Figma", "Notion", "Linear", "Vercel",
-  "Loom", "Retool", "Segment", "Atlassian", "GitLab",
-  // duplicate for seamless loop
-  "Stripe", "Figma", "Notion", "Linear", "Vercel",
-  "Loom", "Retool", "Segment", "Atlassian", "GitLab",
-];
-
 const HOW_STEPS = [
   {
     num: "01",
     icon: <Search className="w-5 h-5" />,
     title: "Post a Role",
-    desc: "Define the skills that matter — not just job titles. Our AI auto-generates relevant assessment templates.",
+    desc: "Define the skills that matter — not just job titles. Candidates browse roles and see exactly what each one requires.",
   },
   {
     num: "02",
     icon: <Brain className="w-5 h-5" />,
     title: "Assess Candidates",
-    desc: "Candidates complete structured skill tests. Cognitive depth, not just syntax — evaluated in real time.",
+    desc: "Candidates complete structured skill assessments, and their verified results are saved to their profile.",
   },
   {
     num: "03",
     icon: <Target className="w-5 h-5" />,
     title: "Hire with Confidence",
-    desc: "Get ranked matches backed by verified performance data, skill heatmaps, and AI-powered insights.",
+    desc: "Review ranked matches with explainable match scores and a clear skill-gap report for every application.",
   },
 ];
 
 const FEATURES = [
   {
-    id: "bias",
+    id: "screening",
     icon: <ShieldCheck className="w-6 h-6" />,
-    title: "Bias-Free Screening",
-    desc: "Evaluate purely on skill signals and real performance data — fully anonymised until shortlisting.",
+    title: "Skill-First Screening",
+    desc: "Evaluate candidates on demonstrated skills and assessment results — not just keywords on a résumé.",
     accent: "bg-blue-50",
     iconColor: "text-blue-600",
     large: true,
   },
   {
-    id: "pulse",
-    icon: <Activity className="w-6 h-6" />,
-    title: "Real-time Pulse",
-    desc: "Live evaluation tracking as candidates complete each assessment module.",
+    id: "assessments",
+    icon: <ClipboardCheck className="w-6 h-6" />,
+    title: "Skill Assessments",
+    desc: "Structured skill tests help candidates prove what they can do before the interview.",
     accent: "bg-violet-50",
     iconColor: "text-violet-600",
     large: false,
   },
   {
-    id: "cognitive",
-    icon: <Brain className="w-6 h-6" />,
-    title: "Cognitive Analysis",
-    desc: "Understand problem-solving depth, not just code output or buzzword frequency.",
+    id: "resume",
+    icon: <FileText className="w-6 h-6" />,
+    title: "Résumé Skill Extraction",
+    desc: "Upload your résumé and we extract your skills automatically to match you against open roles.",
     accent: "bg-indigo-50",
     iconColor: "text-indigo-600",
     large: false,
@@ -119,68 +78,32 @@ const FEATURES = [
     id: "gap",
     icon: <TrendingUp className="w-6 h-6" />,
     title: "Skill Gap Detection",
-    desc: "Pinpoint exactly where a candidate falls short and suggest targeted learning paths.",
+    desc: "See exactly where a candidate falls short of a role's requirements — with suggestions on how to close the gap.",
     accent: "bg-emerald-50",
     iconColor: "text-emerald-600",
     large: false,
   },
   {
-    id: "ai",
+    id: "matching",
     icon: <Zap className="w-6 h-6" />,
-    title: "AI Matching Engine",
-    desc: "Our proprietary model ranks candidates by verified ability, not keyword density.",
+    title: "Matching Engine",
+    desc: "Our matching engine ranks candidates by demonstrated ability and explains every match score — so you always know why.",
     accent: "bg-amber-50",
     iconColor: "text-amber-600",
     large: true,
   },
 ];
 
-const STATS = [
-  { label: "Developers", value: 5000, suffix: "k+", display: "5k+" },
-  { label: "Tech Companies", value: 200, suffix: "+", display: "200+" },
-  { label: "Match Accuracy", value: 98, suffix: "%", display: "98%" },
-  { label: "Hours Saved", value: 12, suffix: "m", display: "12m" },
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Sarah Chen",
-    role: "Head of Engineering",
-    company: "Stripe",
-    avatar: "SC",
-    avatarBg: "bg-blue-100 text-blue-700",
-    text: "JobMatch cut our hiring time from 6 weeks to 12 days. The quality of candidates we see now is incomparable to traditional résumé screening.",
-    stars: 5,
-  },
-  {
-    name: "Marcus Vidal",
-    role: "CTO",
-    company: "LinearHQ",
-    avatar: "MV",
-    avatarBg: "bg-violet-100 text-violet-700",
-    text: "The cognitive analysis reports are uncanny. We discovered a senior engineer hidden in what looked like a junior application — something no recruiter would have caught.",
-    stars: 5,
-  },
-  {
-    name: "Priya Nair",
-    role: "Talent Acquisition Lead",
-    company: "Notion",
-    avatar: "PN",
-    avatarBg: "bg-emerald-100 text-emerald-700",
-    text: "Bias-free assessment is not just a checkbox for us — it's a culture value. JobMatch is the only platform that actually delivers on that promise end-to-end.",
-    stars: 5,
-  },
-];
-
 /* ─── Component ────────────────────────────────────────────────────────── */
 export default function Home() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedJob] = useState({ title: "Senior Product Designer", company: "TechFlow AI" });
-
   /* Welcome Popup */
   const [showWelcome, setShowWelcome] = useState(false);
   const [welcomeLeaving, setWelcomeLeaving] = useState(false);
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
+
+  const displayName = user?.displayName
+    ? user.displayName.split(" ")[0]
+    : user?.email?.split("@")[0] ?? "there";
 
   useEffect(() => {
 
@@ -204,10 +127,6 @@ export default function Home() {
     return () => clearTimeout(hide);
   }, [showWelcome]);
 
-
-  const displayName = user?.displayName
-    ? user.displayName.split(" ")[0]
-    : user?.email?.split("@")[0] ?? "there";
 
   /* Scroll-reveal helper */
   const [heroVisible, setHeroVisible] = useState(false);
@@ -289,7 +208,7 @@ export default function Home() {
             <p
               className={`text-slate-500 mt-4 text-base sm:text-xl max-w-2xl mx-auto leading-relaxed transition-all duration-700 delay-200 ${heroVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
             >
-              JobMatch AI validates real abilities through structured assessments,
+              SkillMatch AI validates real abilities through structured assessments,
               then matches candidates by <strong className="text-slate-700 font-semibold">demonstrated performance</strong> — not keywords.
             </p>
 
@@ -313,45 +232,47 @@ export default function Home() {
 
             </div>
 
-            {/* Social proof micro-text */}
+            {/* Honest tagline micro-text */}
             <p
               className={`mt-5 text-xs text-slate-400 transition-all duration-700 delay-400 ${heroVisible ? "opacity-100" : "opacity-0"}`}
             >
-              Trusted by <strong className="text-slate-600">200+</strong> fast-growing tech teams · No credit card required
+              AI-powered skill matching for candidates and recruiters
             </p>
 
             {/* Floating UI Cards */}
             <div
               className={`relative mx-auto mt-14 max-w-3xl transition-all duration-1000 delay-500 ${heroVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
             >
-              {/* Central dashboard mockup */}
+              {/* Central dashboard mockup — decorative illustration of product features */}
               <div className="relative bg-white border border-slate-200/80 rounded-2xl shadow-2xl shadow-slate-200/60 overflow-hidden">
                 {/* Top bar */}
                 <div className="flex items-center gap-1.5 px-4 py-3 bg-slate-50 border-b border-slate-100">
                   <span className="w-3 h-3 rounded-full bg-red-300" />
                   <span className="w-3 h-3 rounded-full bg-amber-300" />
                   <span className="w-3 h-3 rounded-full bg-emerald-300" />
-                  <span className="ml-4 text-xs text-slate-400 font-mono">skillmatch.ai / dashboard</span>
+                  <span className="ml-4 text-xs text-slate-400 font-mono">SkillMatch AI / dashboard</span>
                 </div>
                 {/* Dashboard content */}
                 <div className="p-5 grid grid-cols-3 gap-4">
                   <div className="col-span-2 bg-indigo-50/60 rounded-xl p-4 border border-indigo-100/60">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-3">Candidate Pipeline</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-3">Skill Breakdown</p>
                     <div className="space-y-2">
                       {[
-                        { name: "Alex Rivera", score: 94, color: "bg-emerald-400" },
-                        { name: "Sam Carter", score: 87, color: "bg-blue-400" },
-                        { name: "Jordan Kim",  score: 82, color: "bg-violet-400" },
-                      ].map((c) => (
-                        <div key={c.name} className="flex items-center gap-3">
-                          <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-600 text-[10px] font-black flex items-center justify-center">{c.name.split(" ").map(n => n[0]).join("")}</div>
+                        { name: "React", width: "85%" },
+                        { name: "TypeScript", width: "70%" },
+                        { name: "System Design", width: "55%" },
+                      ].map((s) => (
+                        <div key={s.name} className="flex items-center gap-3">
+                          <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-600 text-[10px] font-black flex items-center justify-center">
+                            {s.name.slice(0, 2).toUpperCase()}
+                          </div>
                           <div className="flex-1">
                             <div className="flex justify-between mb-1">
-                              <span className="text-[11px] font-semibold text-slate-700">{c.name}</span>
-                              <span className="text-[11px] font-black text-slate-900">{c.score}%</span>
+                              <span className="text-[11px] font-semibold text-slate-700">{s.name}</span>
+                              <span className="text-[10px] font-bold text-slate-400">Assessed</span>
                             </div>
                             <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                              <div className={`h-full ${c.color} rounded-full`} style={{ width: `${c.score}%` }} />
+                              <div className="h-full bg-gradient-to-r from-indigo-400 to-violet-400 rounded-full" style={{ width: s.width }} />
                             </div>
                           </div>
                         </div>
@@ -360,16 +281,16 @@ export default function Home() {
                   </div>
                   <div className="space-y-3">
                     <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-center">
-                      <p className="text-2xl font-black text-emerald-600">92%</p>
-                      <p className="text-[9px] uppercase tracking-widest font-black text-emerald-400">Retention</p>
+                      <ShieldCheck className="w-5 h-5 text-emerald-600 mx-auto mb-1" />
+                      <p className="text-[9px] uppercase tracking-widest font-black text-emerald-500">Verified Skills</p>
                     </div>
                     <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-center">
-                      <p className="text-2xl font-black text-blue-600">4×</p>
-                      <p className="text-[9px] uppercase tracking-widest font-black text-blue-400">Faster</p>
+                      <Target className="w-5 h-5 text-blue-600 mx-auto mb-1" />
+                      <p className="text-[9px] uppercase tracking-widest font-black text-blue-500">Ranked Matches</p>
                     </div>
                     <div className="bg-violet-50 border border-violet-100 rounded-xl p-3 text-center">
-                      <p className="text-2xl font-black text-violet-600">98%</p>
-                      <p className="text-[9px] uppercase tracking-widest font-black text-violet-400">Accuracy</p>
+                      <TrendingUp className="w-5 h-5 text-violet-600 mx-auto mb-1" />
+                      <p className="text-[9px] uppercase tracking-widest font-black text-violet-500">Skill Gap Report</p>
                     </div>
                   </div>
                 </div>
@@ -383,7 +304,7 @@ export default function Home() {
                   </span>
                   <div>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">SKILL VERIFIED</p>
-                    <p className="text-xs font-black text-slate-800">Advanced React.js</p>
+                    <p className="text-xs font-black text-slate-800">Assessment complete</p>
                   </div>
                 </div>
               </div>
@@ -392,7 +313,7 @@ export default function Home() {
                   <div className="w-2 h-2 rounded-full bg-indigo-500 relative">
                     <div className="absolute inset-0 rounded-full bg-indigo-400 animate-ping-slow" />
                   </div>
-                  <p className="text-xs font-black text-slate-800">New Match <span className="text-indigo-600">94%</span></p>
+                  <p className="text-xs font-black text-slate-800">New match found</p>
                 </div>
               </div>
             </div>
@@ -409,25 +330,7 @@ export default function Home() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            2. TRUSTED BY – MARQUEE STRIP
-        ══════════════════════════════════════════════════════════════ */}
-        <section className="py-10 border-y border-slate-100 bg-slate-50/60">
-          <div className="max-w-6xl mx-auto px-6 text-center mb-5">
-            <p className="text-xs font-bold tracking-[0.25em] uppercase text-slate-400">Trusted by teams at</p>
-          </div>
-          <div className="overflow-hidden">
-            <div className="flex animate-marquee gap-14 w-max">
-              {PARTNERS.map((name, i) => (
-                <span key={i} className="text-slate-400 font-black text-sm tracking-wide whitespace-nowrap hover:text-indigo-500 transition-colors cursor-default">
-                  {name}
-                </span>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════════
-            3. HOW IT WORKS
+            2. HOW IT WORKS
         ══════════════════════════════════════════════════════════════ */}
         <section id="how-it-works" className="py-20 sm:py-28 bg-white">
           <div className="max-w-6xl mx-auto px-6">
@@ -435,7 +338,7 @@ export default function Home() {
               <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">Process</p>
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900">Three steps to smarter hiring</h2>
               <p className="text-slate-500 mt-3 text-base max-w-xl mx-auto">
-                From job post to verified candidate in a fraction of traditional hiring time.
+                From job post to skill-verified candidate, in one structured flow.
               </p>
             </div>
 
@@ -443,7 +346,7 @@ export default function Home() {
               {/* Connector line on desktop */}
               <div className="hidden md:block absolute top-12 left-[calc(16.66%+1.5rem)] right-[calc(16.66%+1.5rem)] h-[2px] bg-gradient-to-r from-indigo-200 via-violet-200 to-indigo-200" />
 
-              {HOW_STEPS.map((step, idx) => (
+              {HOW_STEPS.map((step) => (
                 <div key={step.num} className="card-hover relative bg-white border border-slate-100 rounded-2xl p-7 text-left hover:border-indigo-100 group">
                   <div className="flex items-center gap-3 mb-5">
                     <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-md shadow-indigo-200 relative z-10">
@@ -460,7 +363,7 @@ export default function Home() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            4. FEATURES — BENTO GRID
+            3. FEATURES — BENTO GRID
         ══════════════════════════════════════════════════════════════ */}
         <section className="py-20 sm:py-28 bg-slate-50/70">
           <div className="max-w-6xl mx-auto px-6">
@@ -468,82 +371,28 @@ export default function Home() {
               <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">Capabilities</p>
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900">Everything you need to hire smarter</h2>
               <p className="text-slate-500 mt-3 text-base max-w-xl mx-auto">
-                Modern, measurable hiring tools designed for engineering-driven teams.
+                Job posting, skill assessments, explainable matches and skill-gap reports — all in one place.
               </p>
             </div>
 
             {/* Bento grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 auto-rows-auto">
-              {/* Bias-Free — large (col-span-2) */}
+              {/* Skill-First Screening — large (col-span-2) */}
               <FeatureCard f={FEATURES[0]} className="sm:col-span-2" />
-              {/* Pulse — normal */}
+              {/* Assessments — normal */}
               <FeatureCard f={FEATURES[1]} />
-              {/* Cognitive — normal */}
+              {/* Résumé extraction — normal */}
               <FeatureCard f={FEATURES[2]} />
               {/* Skill Gap — normal */}
               <FeatureCard f={FEATURES[3]} />
-              {/* AI Matching — large (col-span-2) */}
+              {/* Matching Engine — large (col-span-2) */}
               <FeatureCard f={FEATURES[4]} className="sm:col-span-2" />
             </div>
           </div>
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            5. STATS
-        ══════════════════════════════════════════════════════════════ */}
-        <section className="py-20 bg-white">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-12">
-              <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">Impact</p>
-              <h2 className="text-3xl sm:text-4xl font-black text-slate-900">Numbers that speak for themselves</h2>
-            </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-              {STATS.map((s) => (
-                <StatCard key={s.label} stat={s} />
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════════
-            6. TESTIMONIALS
-        ══════════════════════════════════════════════════════════════ */}
-        <section className="py-20 sm:py-28 bg-slate-50/70">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">Social Proof</p>
-              <h2 className="text-3xl sm:text-4xl font-black text-slate-900">Loved by hiring teams</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {TESTIMONIALS.map((t, i) => (
-                <div
-                  key={t.name}
-                  className="card-hover bg-white border border-slate-100 rounded-2xl p-7 flex flex-col"
-                >
-                  {/* Stars */}
-                  <div className="flex gap-0.5 mb-5">
-                    {Array.from({ length: t.stars }).map((_, j) => (
-                      <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <p className="text-slate-700 text-sm leading-relaxed flex-1">&quot;{t.text}&quot;</p>
-                  <div className="mt-6 flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-full text-sm font-black flex items-center justify-center ${t.avatarBg}`}>
-                      {t.avatar}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900">{t.name}</p>
-                      <p className="text-xs text-slate-400">{t.role} · {t.company}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════════
-            7. INSIGHT CTA PANEL
+            4. INSIGHT CTA PANEL
         ══════════════════════════════════════════════════════════════ */}
         <section className="py-20 sm:py-28 bg-white">
           <div className="max-w-6xl mx-auto px-6">
@@ -557,11 +406,11 @@ export default function Home() {
                   Insightful analytics for every hiring decision
                 </h2>
                 <p className="text-slate-500 text-sm sm:text-base mt-4 leading-relaxed">
-                  Get a clear view of your pipeline with predictive analytics, calibrated scoring,
-                  and skill heatmaps that explain hiring decisions — not just rank them.
+                  Get a clear view of your pipeline with match scores, skill-gap
+                  reports and assessment results that explain hiring decisions — not just rank them.
                 </p>
                 <ul className="mt-7 space-y-3">
-                  {["Automated candidate ranking", "Skill correlation heatmaps", "Soft-skill behavioral analysis", "Exportable PDF reports"].map((item) => (
+                  {["Automated candidate ranking", "Skill-gap analysis per application", "Interview scheduling", "Assessment results on every profile"].map((item) => (
                     <li key={item} className="flex items-center gap-3 text-sm text-slate-700">
                       <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
                         <CheckCircle2 className="w-3 h-3 text-indigo-600" />
@@ -578,30 +427,28 @@ export default function Home() {
                 </Link>
               </div>
 
-              {/* Dashboard mockup */}
+              {/* Dashboard mockup — decorative illustration */}
               <div className="relative bg-white border border-slate-200/80 rounded-2xl shadow-xl overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-50 border-b border-slate-100">
                   <span className="w-2.5 h-2.5 rounded-full bg-red-300" />
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-300" />
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-300" />
-                  <span className="ml-3 text-[10px] text-slate-400 font-mono">Analytics · Live</span>
-                  <span className="ml-auto flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-[9px] text-emerald-500 font-bold">Live</span>
-                  </span>
+                  <span className="ml-3 text-[10px] text-slate-400 font-mono">Analytics preview</span>
                 </div>
                 {/* Content */}
                 <div className="p-5 space-y-4">
-                  {/* Stats row */}
+                  {/* Pipeline stages */}
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { label: "Applicants", val: "128", color: "text-indigo-600" },
-                      { label: "Shortlisted", val: "24", color: "text-emerald-600" },
-                      { label: "Avg Score", val: "87%", color: "text-blue-600" },
+                      { label: "Applicants", Icon: Users, color: "text-indigo-600 bg-indigo-50" },
+                      { label: "Shortlisted", Icon: Star, color: "text-emerald-600 bg-emerald-50" },
+                      { label: "Interviews", Icon: ClipboardCheck, color: "text-blue-600 bg-blue-50" },
                     ].map((m) => (
                       <div key={m.label} className="bg-slate-50 rounded-lg p-2.5 text-center border border-slate-100">
-                        <p className={`text-base font-black ${m.color}`}>{m.val}</p>
+                        <span className={`inline-flex w-6 h-6 items-center justify-center rounded-md mb-1 ${m.color}`}>
+                          <m.Icon className="w-3.5 h-3.5" />
+                        </span>
                         <p className="text-[9px] uppercase tracking-wide text-slate-400 font-bold">{m.label}</p>
                       </div>
                     ))}
@@ -609,17 +456,13 @@ export default function Home() {
                   {/* Skill bars */}
                   <div className="space-y-2.5">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Skill Coverage</p>
-                    {[
-                      { skill: "TypeScript", pct: 88 },
-                      { skill: "System Design", pct: 74 },
-                      { skill: "API Architecture", pct: 61 },
-                    ].map((s) => (
-                      <div key={s.skill}>
+                    {["TypeScript", "System Design", "API Architecture"].map((skill) => (
+                      <div key={skill}>
                         <div className="flex justify-between text-[11px] font-semibold text-slate-600 mb-1">
-                          <span>{s.skill}</span><span>{s.pct}%</span>
+                          <span>{skill}</span><span className="text-slate-400">Assessed</span>
                         </div>
                         <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full" style={{ width: `${s.pct}%` }} />
+                          <div className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full" style={{ width: "70%" }} />
                         </div>
                       </div>
                     ))}
@@ -631,7 +474,7 @@ export default function Home() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            8. FINAL CTA BANNER
+            5. FINAL CTA BANNER
         ══════════════════════════════════════════════════════════════ */}
         <section className="py-16 sm:py-20">
           <div className="max-w-5xl mx-auto px-6">
@@ -644,29 +487,28 @@ export default function Home() {
 
               <div className="relative">
                 <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-bold tracking-wide mb-6">
-                  <Users className="w-3.5 h-3.5" /> 200+ companies already onboard
+                  <Users className="w-3.5 h-3.5" /> For candidates and recruiters
                 </div>
                 <h2 className="text-2xl sm:text-4xl font-black leading-tight">
                   Ready to build a skill-first team?
                 </h2>
                 <p className="text-indigo-200 text-sm sm:text-base mt-3 max-w-lg mx-auto">
-                  Create assessments, invite candidates, and hire with verified evidence — all in one platform.
+                  Post a role, invite candidates to prove their skills, and hire with verified evidence — all in one platform.
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
                   <Link
                     href="/signup"
                     className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-indigo-700 px-8 py-3.5 rounded-full font-black text-sm shadow-lg shadow-black/10 hover:bg-indigo-50 transition-colors"
                   >
-                    Get Started Free <ArrowRight className="w-4 h-4" />
+                    Get Started <ArrowRight className="w-4 h-4" />
                   </Link>
                   <Link
-                    href="/jobs"
+                    href="/contact"
                     className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-800/60 border border-indigo-500/50 text-white px-8 py-3.5 rounded-full font-bold text-sm hover:bg-indigo-800 transition-colors"
                   >
-                    Talk to Sales
+                    Contact us
                   </Link>
                 </div>
-                <p className="mt-5 text-indigo-300 text-xs">No credit card required · Free plan available · Cancel anytime</p>
               </div>
             </div>
           </div>
@@ -675,13 +517,6 @@ export default function Home() {
       </main>
 
       <Footer />
-
-      <ApplyModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        jobTitle={selectedJob.title}
-        companyName={selectedJob.company}
-      />
     </div>
   );
 }
@@ -697,26 +532,6 @@ function FeatureCard({ f, className = "" }) {
       </div>
       <h3 className="text-base font-black text-slate-900 mb-2 group-hover:text-indigo-700 transition-colors">{f.title}</h3>
       <p className="text-sm text-slate-500 leading-relaxed">{f.desc}</p>
-    </div>
-  );
-}
-
-/* ─── Stat Card sub-component ─────────────────────────────────────────── */
-function StatCard({ stat }) {
-  const { count, ref } = useCountUp(stat.value);
-  const isPercent = stat.suffix === "%";
-  const isSuffix  = stat.suffix !== "%";
-
-  return (
-    <div ref={ref} className="card-hover bg-white border border-slate-100 rounded-2xl py-8 px-4 text-center hover:border-indigo-100">
-      <div className="text-3xl sm:text-4xl font-black text-slate-900">
-        <span className="shimmer-text">
-          {count}{stat.suffix}
-        </span>
-      </div>
-      <div className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-400 mt-2">
-        {stat.label}
-      </div>
     </div>
   );
 }

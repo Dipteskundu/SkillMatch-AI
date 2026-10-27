@@ -7,9 +7,9 @@ import { useAuth } from "../../lib/AuthContext";
 import Avatar from "../../components/common/Avatar";
 import {
   LayoutDashboard, Briefcase, Bookmark, FileText, User, Settings,
-  LogOut, Users, Clock, Building, Zap, Shield, ChevronLeft, ShieldCheck, AlertTriangle,
+  LogOut, Users, Clock, Building, Zap, ChevronLeft, ShieldCheck, AlertTriangle,
   ChevronRight, BarChart2, Search, X, Home, Star, CheckCircle2, UserCheck, AlignJustify,
-  CalendarDays, Plus,
+  CalendarDays, Plus, Sparkles, GraduationCap, Scale, KeyRound, CreditCard,
 } from "lucide-react";
 
 const NAV_BY_ROLE = {
@@ -23,7 +23,9 @@ const NAV_BY_ROLE = {
     { label: "Saved Jobs",      href: "/saved-jobs",               icon: Bookmark },
     { label: "Skill Test",      href: "/verification/skill-intro", icon: Zap },
     { label: "Skill Gap",       href: "/skill-gap-detection",      icon: BarChart2 },
-    { label: "My Profile",      href: "/profile",                  icon: User },
+    { label: "Learning Hub",    href: "/dashboard/learning",        icon: GraduationCap },
+    { label: "Plan & Pricing",  href: "/pricing",                   icon: CreditCard },
+    { label: "My Profile",      href: "/profile",                   icon: User },
     { label: "Edit Profile",    href: "/profile/edit",             icon: Settings },
   ],
   recruiter: [
@@ -36,6 +38,7 @@ const NAV_BY_ROLE = {
     { label: "Calendar",         href: "/calendar",             icon: CalendarDays },
     { label: "Final Selected",   href: "/final-selected",       icon: UserCheck },
     { label: "My Jobs",          href: "/my-jobs",              icon: Briefcase },
+    { label: "AI Copilot",       href: "/copilot",              icon: Sparkles },
     { label: "My Profile",       href: "/profile",              icon: User },
   ],
   admin: [
@@ -44,8 +47,8 @@ const NAV_BY_ROLE = {
     { label: "Deletion Requests",   href: "/admin/deletion-requests",           icon: AlertTriangle },
     { label: "Approved Jobs",       href: "/admin/approved-jobs",               icon: Briefcase },
     { label: "Users",               href: "/admin/users",                       icon: Users },
-    { label: "Reports",             href: "/admin/reports",                     icon: BarChart2 },
-    { label: "Security",            href: "/admin/security",                    icon: Shield },
+    { label: "Bias & Fairness",     href: "/admin/bias-metrics",                icon: Scale },
+    { label: "API Keys",            href: "/admin/api-keys",                    icon: KeyRound },
   ],
 };
 
@@ -76,7 +79,7 @@ function SidebarInner({
       <div className="flex items-center justify-between px-4 h-16 border-b border-slate-100 shrink-0 animate-slide-down">
         {!isCollapsed && (
           <Link href="/" className="text-[16px] font-black text-slate-900 tracking-tight hover-scale">
-            Job<span className="text-indigo-600">Match</span>
+            SkillMatch<span className="text-indigo-600"> AI</span>
           </Link>
         )}
         {isMobile ? (
