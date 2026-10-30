@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../lib/AuthContext";
 import { uploadToImgBB } from "../../../lib/imageUpload";
-import { updateProfile } from "firebase/auth";
-import { auth } from "../../../lib/firebaseClient";
 import Image from "next/image";
 import {
   User, Mail, MapPin, Phone, Briefcase, Award, Save, ArrowLeft,
@@ -105,7 +103,7 @@ export default function EditProfilePage() {
       const { url, error: uploadError } = await uploadToImgBB(file);
       if (url) {
         setFormData(prev => ({ ...prev, photoURL: url }));
-        if (auth?.currentUser) { await updateProfile(auth.currentUser, { photoURL: url }); await refreshUser(); }
+        await refreshUser();
         setSuccess("Photo uploaded!");
       } else { setError(uploadError || "Upload failed"); }
     } catch { setError("Upload error"); }
@@ -132,7 +130,7 @@ export default function EditProfilePage() {
       const res = await api.put(`/api/auth/profile/${user.uid}`, processedData);
       const json = res.data;
       if (json.success) {
-        if (auth?.currentUser) { await updateProfile(auth.currentUser, { displayName: formData.displayName || auth.currentUser.displayName }); await refreshUser(); }
+        await refreshUser();
         setSuccess("Profile updated!");
         setTimeout(() => router.push("/profile"), 1200);
       } else { setError(json.message || "Update failed"); }

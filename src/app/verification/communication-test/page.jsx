@@ -6,6 +6,7 @@ import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Clock, Send, ShieldAlert, CheckCircle2, MessageCircle } from "lucide-react";
+import { apiFetch } from "../../lib/apiClient";
 
 export default function CommunicationTestPage() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -33,7 +34,7 @@ export default function CommunicationTestPage() {
     setWarnMsg("");
 
     try {
-      const res = await fetch(`/api/verification/communication/start`, {
+      const res = await apiFetch(`/api/verification/communication/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ candidateId: user.uid }),
@@ -91,7 +92,7 @@ export default function CommunicationTestPage() {
       answer: String(answer || "").trim(),
     }));
     try {
-      const res = await fetch(`/api/verification/communication/submit`, {
+      const res = await apiFetch(`/api/verification/communication/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId, answers: formattedAnswers }),

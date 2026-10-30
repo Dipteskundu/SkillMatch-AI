@@ -16,8 +16,6 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { ref, onValue } from "firebase/database";
-import { rtdb } from "../../lib/firebaseClient";
 import Skeleton from "../../components/common/Skeleton";
 import { useScrollReveal } from "../../lib/useScrollReveal";
 import { RecruiterPipelineChart, RecruiterJobsChart } from "./DashboardCharts";
@@ -41,7 +39,6 @@ function StatCard({ label, value, icon: Icon, color, bg }) {
 }
 
 export default function RecruiterDashboard({ user, data, loading }) {
-  const [liveApplicantCounts, setLiveApplicantCounts] = useState({});
   const [showPostJob, setShowPostJob] = useState(false);
   const [jobForm, setJobForm] = useState({
     title: "",
@@ -63,20 +60,6 @@ export default function RecruiterDashboard({ user, data, loading }) {
   // Debug: Check if user data is available
   devLog("RecruiterDashboard mounted with user:", user);
   devLog("User UID available:", !!user?.uid);
-
-  useEffect(() => {
-    if (!data?.jobs || !rtdb) return;
-    const unsubscribes = data.jobs.map((job) => {
-      const countRef = ref(rtdb, `jobApplicants/${job._id}`);
-      return onValue(countRef, (snapshot) => {
-        const val = snapshot.val();
-        if (val?.count !== undefined) {
-          setLiveApplicantCounts((prev) => ({ ...prev, [job._id]: val.count }));
-        }
-      });
-    });
-    return () => unsubscribes.forEach((u) => u());
-  }, [data?.jobs]);
 
   if (loading) {
     return (
@@ -414,9 +397,7 @@ export default function RecruiterDashboard({ user, data, loading }) {
                         {job.title}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        {liveApplicantCounts[job._id] ??
-                          job.applicantsCount ??
-                          0}{" "}
+                        {job.applicantsCount ?? 0}{" "}
                         applicants
                       </p>
                     </div>

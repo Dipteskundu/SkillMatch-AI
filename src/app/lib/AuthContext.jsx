@@ -1,85 +1,104 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "./firebaseClient";
-
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import api from "./apiClient";
 
 const AuthContext = createContext(null);
+const TOKEN_KEY = "jwt_token";
+const REFRESH_KEY = "refresh_token";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const firebaseReady = Boolean(auth);
 
-  useEffect(() => {
-    if (!auth) {
-      setUser(null);
-      setUserProfile(null);
-      setLoading(false);
-      return undefined;
+  const refreshUser = useCallback(async () => {
+    const res = await api.get("/api/auth/me");
+    const profile = res.data?.success ? res.data.data : null;
+    setUser(profile);
+    if (!profile) {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(REFRESH_KEY);
     }
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        try {
-          const res = await api.get(`/api/auth/profile/${firebaseUser.uid}`);
-          if (res.data.success) {
-            setUserProfile(res.data.data);
-          }
-        } catch (err) {
-          console.error("Failed to fetch user profile in AuthContext:", err);
-        }
-      } else {
-        setUserProfile(null);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    return profile;
   }, []);
 
-  const logout = async () => {
-    if (!auth) return;
-    await signOut(auth);
-    setUser(null);
-    setUserProfile(null);
+  // Restore the session from the stored token on first load.
+  useEffect(() => {
+    if (!localStorage.getItem(TOKEN_KEY)) {
+      setLoading(false);
+      return;
+    }
+    refreshUser()
+      .catch(() => {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(REFRESH_KEY);
+        setUser(null);
+      })
+      .finally(() => setLoading(false));
+  }, [refreshUser]);
+
+  const login = async (email, password) => {
+    try {
+      const res = await api.post("/api/auth/login", { email, password });
+      if (!res.data?.success || !res.data.token) {
+        return { success: false, message: res.data?.message || "Login failed" };
+      }
+      localStorage.setItem(TOKEN_KEY, res.data.token);
+      if (res.data.refreshToken) localStorage.setItem(REFRESH_KEY, res.data.refreshToken);
+      setUser(res.data.user);
+      return { success: true, user: res.data.user };
+    } catch (err) {
+      return {
+        success: false,
+        message: err?.response?.data?.message || "Cannot reach the server. Please try again.",
+      };
+    }
   };
 
-  const refreshUser = async () => {
-    if (!auth) return;
-    if (auth.currentUser) {
-      await auth.currentUser.reload();
-      setUser({ ...auth.currentUser });
-      try {
-        const res = await api.get(`/api/auth/profile/${auth.currentUser.uid}`);
-        if (res.data.success) {
-          setUserProfile(res.data.data);
-        }
-      } catch (err) {
-        console.error("Failed to refresh user profile:", err);
+  const register = async (email, password, role = "candidate", displayName = "") => {
+    try {
+      const res = await api.post("/api/auth/register", { email, password, role, displayName });
+      if (!res.data?.success || !res.data.token) {
+        return { success: false, message: res.data?.message || "Registration failed" };
       }
+      localStorage.setItem(TOKEN_KEY, res.data.token);
+      if (res.data.refreshToken) localStorage.setItem(REFRESH_KEY, res.data.refreshToken);
+      setUser(res.data.user);
+      return { success: true, user: res.data.user };
+    } catch (err) {
+      return {
+        success: false,
+        message: err?.response?.data?.message || "Cannot reach the server. Please try again.",
+      };
     }
+  };
+
+  const logout = async () => {
+    const refreshToken = localStorage.getItem(REFRESH_KEY);
+    if (refreshToken) {
+      // Best effort: revoke server-side, but never block sign-out.
+      api.post("/api/auth/logout", { refreshToken }).catch(() => {});
+    }
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+    setUser(null);
   };
 
   const value = {
     user,
-    userProfile,
-    role: userProfile?.role || null,
+    userProfile: user,
+    role: user?.role || null,
+    isAuthenticated: Boolean(user),
     loading,
-    isAuthenticated: !!user,
-    firebaseReady,
+    // Kept for pages that wait on auth before fetching.
+    firebaseReady: true,
+    login,
     logout,
+    register,
     refreshUser,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
@@ -89,4 +108,3 @@ export function useAuth() {
   }
   return ctx;
 }
-

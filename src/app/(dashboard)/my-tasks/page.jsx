@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../lib/AuthContext";
-import { API_BASE } from "../../lib/apiClient";
+import { API_BASE, apiFetch } from "../../lib/apiClient";
 import { CheckCircle, Clock, ExternalLink, Github, FileText, Send } from "lucide-react";
 import Link from "next/link";
 
@@ -27,7 +27,7 @@ export default function MyTasksPage() {
   const fetchData = useCallback(async () => {
     if (!user?.uid) return;
     try {
-      const res = await fetch(`/api/tasks/candidate/${user.uid}`);
+      const res = await apiFetch(`/api/tasks/candidate/${user.uid}`);
       const data = await res.json();
       if (data.success) {
         setTasks(data.tasks || []);
@@ -71,7 +71,7 @@ export default function MyTasksPage() {
 
   const handleAcceptTask = async (task, application) => {
     try {
-      const res = await fetch(`/api/tasks/${task._id}/accept`, {
+      const res = await apiFetch(`/api/tasks/${task._id}/accept`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ applicationId: application._id })
@@ -118,7 +118,7 @@ export default function MyTasksPage() {
     setError("");
 
     try {
-      const res = await fetch(`/api/tasks/${activeTask._id}/submit`, {
+      const res = await apiFetch(`/api/tasks/${activeTask._id}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

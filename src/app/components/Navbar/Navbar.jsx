@@ -25,6 +25,7 @@ import {
   Clock,
   Sun,
   Moon,
+  GraduationCap,
 } from "lucide-react";
 import { useAuth } from "../../lib/AuthContext";
 import { useTheme } from "../../lib/ThemeContext";
@@ -129,6 +130,7 @@ export default function Navbar() {
     { name: "Home", href: "/", icon: Home },
     { name: "Find Jobs", href: "/jobs", icon: Briefcase },
     { name: "Companies", href: "/companies", icon: Building2 },
+    { name: "Learning", href: "/learning-hub", icon: GraduationCap },
     { name: "About Us", href: "/about", icon: Info },
   ];
 

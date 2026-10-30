@@ -20,7 +20,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import PageWrapper from "../components/common/PageWrapper";
-import { API_BASE } from "../lib/apiClient";
+import { API_BASE, apiFetch } from "../lib/apiClient";
 
 export default function SkillGapDetectionPage() {
   const { user, isAuthenticated } = useAuth();
@@ -47,7 +47,7 @@ export default function SkillGapDetectionPage() {
     async function fetchJobs() {
       try {
         setLoading(true);
-        const res = await fetch(`/api/jobs`);
+        const res = await apiFetch(`/api/jobs`);
         if (!res.ok) throw new Error("Failed to fetch jobs");
         const data = await res.json();
         const list = Array.isArray(data) ? data : data.data || data.jobs || [];

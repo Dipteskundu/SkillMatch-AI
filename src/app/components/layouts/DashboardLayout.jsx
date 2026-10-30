@@ -10,6 +10,7 @@ import Avatar from "../common/Avatar";
 import PageTransition from "../common/PageTransition";
 import DashboardSidebar from "../../dashboard/components/DashboardSidebar";
 import NotificationPanel from "../Notifications/NotificationPanel";
+import { apiFetch } from "../../lib/apiClient";
 
 export default function DashboardLayout({ children }) {
   const { user, userProfile, role: contextRole, isAuthenticated, loading: authLoading } = useAuth();
@@ -36,7 +37,7 @@ export default function DashboardLayout({ children }) {
 
     const fetchUnread = async () => {
       try {
-        const res = await fetch(`/api/notifications/${user.uid}`);
+        const res = await apiFetch(`/api/notifications/${user.uid}`);
         if (!res.ok) return;
         const json = await res.json();
         if (json.success && json.data) setUnreadCount(json.data.unreadCount || 0);

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../lib/AuthContext";
-import { API_BASE } from "../../lib/apiClient";
+import { API_BASE, apiFetch } from "../../lib/apiClient";
 import {
   Users, Star, FileText, AlignJustify, CalendarDays,
   Clock, CheckCircle2, UserCheck, Briefcase, ChevronDown,
@@ -43,7 +43,7 @@ export default function PipelineLayout({ children, activePhase }) {
 
   useEffect(() => {
     if (!user?.uid) return;
-    fetch(`/api/jobs/my-jobs/${user.uid}`)
+    apiFetch(`/api/jobs/my-jobs/${user.uid}`)
       .then(r => r.json())
       .then(d => {
         if (d.success) {
@@ -63,7 +63,7 @@ export default function PipelineLayout({ children, activePhase }) {
 
   useEffect(() => {
     if (!user?.uid) return;
-    fetch(`/api/applications/recruiter/${user.uid}`)
+    apiFetch(`/api/applications/recruiter/${user.uid}`)
       .then(r => r.json())
       .then(d => {
         if (!d.success) return;

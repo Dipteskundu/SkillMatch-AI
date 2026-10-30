@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../../lib/AuthContext";
-import { API_BASE } from "../../../lib/apiClient";
+import { API_BASE, apiFetch } from "../../../lib/apiClient";
 import {
   Users, Search, Shield, Briefcase, User, BadgeCheck,
   MapPin, Calendar, ChevronLeft, ChevronRight, Loader2, RefreshCw,
@@ -33,7 +33,7 @@ export default function AdminUsersPage() {
       if (search) params.set("search", search);
       if (roleFilter) params.set("role", roleFilter);
 
-      const res = await fetch(`/api/admin/users?${params}`);
+      const res = await apiFetch(`/api/admin/users?${params}`);
       const data = await res.json();
       if (data.success) {
         setUsers(data.users || []);

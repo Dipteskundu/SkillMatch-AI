@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, CheckCircle, ArrowRight, XCircle, Zap, Target } from "lucide-react";
-import { API_BASE } from "../../lib/apiClient";
+import { API_BASE, apiFetch } from "../../lib/apiClient";
 
 // ── Score Ring (CSS-only circular progress) ──────────────────
 function ScoreRing({ score }) {
@@ -94,7 +94,7 @@ export default function FitMapModal({ job, uid, onClose, onApply }) {
             setLoading(true);
             setError(null);
             try {
-                const res = await fetch(`/api/jobs/${job._id}/fit?uid=${uid}`);
+                const res = await apiFetch(`/api/jobs/${job._id}/fit?uid=${uid}`);
                 const json = await res.json();
                 if (json.success) {
                     setFitData(json.data);

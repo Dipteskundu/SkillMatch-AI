@@ -2,27 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Rocket, Mail, Lock, User, Eye, EyeOff, Github, Chrome, CheckCircle2, ArrowLeft, Briefcase, Building2 } from "lucide-react";
+import { Rocket, Mail, Lock, User, Eye, EyeOff, CheckCircle2, ArrowLeft, Briefcase, Building2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { auth, googleProvider, firebaseClientStatus } from "../lib/firebaseClient";
-import { createUserWithEmailAndPassword, signInWithPopup, updateProfile } from "firebase/auth";
-import api, { API_BASE } from "../lib/apiClient";
 import { safeError } from "../lib/logger";
 import { useAuth } from "../lib/AuthContext";
-
-function normalizeAuthError(err) {
-    const code = String(err?.code || "").toLowerCase();
-    const message = String(err?.message || "");
-
-    if (
-        code === "auth/unauthorized-domain" ||
-        message.includes("Illegal url for new iframe")
-    ) {
-        return "Google Sign-In is not authorized for this domain yet. Add your Vercel domain under Firebase Authentication \u2192 Settings \u2192 Authorized domains.";
-    }
-
-    return message || "Authentication failed";
-}
+import { postLoginPath } from "../lib/redirect";
 
 export default function SignUpPage() {
     const [mounted, setMounted] = useState(false);
@@ -34,16 +18,8 @@ export default function SignUpPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const { refreshUser } = useAuth();
+    const { register } = useAuth();
     const router = useRouter();
-
-    const apiBase = API_BASE;
-    const firebaseDisabled = !auth;
-    const firebaseReason = !firebaseClientStatus.configured
-        ? "missing-config"
-        : firebaseClientStatus.authError || firebaseClientStatus.initError
-            ? "init-failed"
-            : "unknown";
 
     useEffect(() => {
         setMounted(true);
@@ -55,75 +31,21 @@ export default function SignUpPage() {
         return <div className="min-h-screen bg-white" />;
     }
 
-    async function syncUserWithBackend(user, selectedRole) {
-        try {
-            await api.post("/api/auth/sync-user", {
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName,
-                provider: user.providerData?.[0]?.providerId,
-                photoURL: user.photoURL,
-                role: selectedRole,
-            });
-            await refreshUser();
-        } catch (err) {
-            safeError("Failed to sync user with backend", err);
-        }
-    }
-
     const handleEmailSignUp = async (event) => {
         event.preventDefault();
         setError("");
-        if (firebaseDisabled) {
-            setError(
-                firebaseReason === "missing-config"
-                    ? "Firebase Auth is not configured. Set NEXT_PUBLIC_FIREBASE_* env vars (especially NEXT_PUBLIC_FIREBASE_API_KEY) and restart the dev server."
-                    : `Firebase Auth failed to initialize (${firebaseClientStatus.authError || firebaseClientStatus.initError}). Check your NEXT_PUBLIC_FIREBASE_* values (especially NEXT_PUBLIC_FIREBASE_API_KEY).`,
-            );
-            return;
-        }
         setLoading(true);
 
         try {
-            const cred = await createUserWithEmailAndPassword(auth, email, password);
-            await updateProfile(cred.user, { displayName: fullName });
-
-            await syncUserWithBackend(
-                {
-                    ...cred.user,
-                    displayName: fullName,
-                },
-                role
-            );
-
-            router.push("/");
+            const result = await register(email, password, role, fullName);
+            if (!result.success) {
+                setError(result.message);
+                return;
+            }
+            router.push(postLoginPath());
         } catch (err) {
             safeError("Email sign up error", err);
-            setError(err.message || "Failed to create account");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleGoogleSignUp = async () => {
-        setError("");
-        if (firebaseDisabled) {
-            setError(
-                firebaseReason === "missing-config"
-                    ? "Firebase Auth is not configured. Set NEXT_PUBLIC_FIREBASE_* env vars and restart the dev server."
-                    : `Firebase Auth failed to initialize (${firebaseClientStatus.authError || firebaseClientStatus.initError}). Check your NEXT_PUBLIC_FIREBASE_* values.`,
-            );
-            return;
-        }
-        setLoading(true);
-
-        try {
-            const cred = await signInWithPopup(auth, googleProvider);
-            await syncUserWithBackend(cred.user, role);
-            router.push("/");
-        } catch (err) {
-            safeError("Google sign up error", err);
-            setError(normalizeAuthError(err));
+            setError("Failed to create account");
         } finally {
             setLoading(false);
         }
@@ -131,15 +53,6 @@ export default function SignUpPage() {
 
     return (
         <div className="min-h-screen bg-[#fdfdfe] flex flex-col lg:flex-row-reverse relative">
-            {firebaseDisabled && (
-                <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[300] max-w-xl w-[calc(100%-2rem)]">
-                    <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl px-4 py-3 text-sm font-semibold shadow-sm">
-                        {firebaseReason === "missing-config"
-                            ? "Firebase Auth is not configured. Add `NEXT_PUBLIC_FIREBASE_API_KEY` (and the other `NEXT_PUBLIC_FIREBASE_*` vars) in `JobMatch-AI/.env.local` (or `JobMatch-AI/.env`) or in Vercel Project Settings → Environment Variables."
-                            : `Firebase Auth failed to initialize (${firebaseClientStatus.authError || firebaseClientStatus.initError}). Re-check your Firebase web config values and restart the dev server.`}
-                    </div>
-                </div>
-            )}
             {/* Fixed Back Button */}
             <Link
                 href="/"
@@ -307,30 +220,6 @@ export default function SignUpPage() {
                             {loading ? "Creating account..." : "Create Account"}
                         </button>
                     </form>
-
-                    <div className="my-8 flex items-center gap-4">
-                        <div className="h-px bg-slate-100 flex-1"></div>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Or sign up with</span>
-                        <div className="h-px bg-slate-100 flex-1"></div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <button
-                            type="button"
-                            onClick={handleGoogleSignUp}
-                            disabled={loading}
-                            className="flex items-center justify-center gap-3 py-4 border border-slate-100 rounded-2xl hover:bg-slate-50 transition-colors font-bold text-slate-700 disabled:opacity-70 disabled:cursor-not-allowed"
-                        >
-                            <Chrome className="w-5 h-5" /> Google
-                        </button>
-                        <button
-                            type="button"
-                            disabled
-                            className="flex items-center justify-center gap-3 py-4 border border-slate-100 rounded-2xl text-slate-400 cursor-not-allowed"
-                        >
-                            <Github className="w-5 h-5" /> GitHub
-                        </button>
-                    </div>
 
                     <p className="mt-8 text-center text-slate-600 font-medium">
                         Already have an account?{" "}
