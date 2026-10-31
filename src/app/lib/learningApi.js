@@ -129,10 +129,30 @@ export async function reportLessonIssue(lessonId, reason) {
   return data?.data ?? null;
 }
 
-export async function updateLessonProgress(lessonId, completed, timeSpent) {
+export async function updateLessonProgress(lessonId, completed, timeSpentMinutes = 0, planId = null) {
   const { data } = await api.patch(
     `/api/v1/learning/progress`,
-    { lessonId, completed, timeSpent },
+    { lessonId, completed, timeSpentMinutes, planId },
   );
+  return data?.data ?? null;
+}
+
+// ── Dashboard overview (My Assessments page) ───────────────────────
+
+/** Plans + 56-day activity rows ({day:"YYYY-MM-DD", lessons, minutes}). */
+export async function fetchMyPlansWithActivity() {
+  const { data } = await api.get("/api/v1/learning/my-plans");
+  return { plans: data?.data ?? [], activity: data?.activity ?? [] };
+}
+
+/** totalAttempts, averageScore, bestScore, topicPerformance[], attempts[]. */
+export async function fetchAssessmentSummary() {
+  const { data } = await api.get("/api/v1/assessments/summary");
+  return data?.data ?? null;
+}
+
+/** Adaptive suggestions (LH-023) — informational, failures tolerated. */
+export async function fetchLearningRecommendations() {
+  const { data } = await api.get("/api/v1/learning/recommendations");
   return data?.data ?? null;
 }

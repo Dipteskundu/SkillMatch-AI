@@ -68,7 +68,6 @@ export default function LearningPathsPage() {
         <PageWrapper>
           {/* ── Header ── */}
           <section className="relative overflow-hidden">
-            <div className="absolute inset-0 hero-gradient" aria-hidden="true" />
             <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-14 sm:pt-20 pb-12">
               <div className="animate-fade-up">
                 <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-bold uppercase tracking-widest text-indigo-600 mb-5">
@@ -111,7 +110,7 @@ export default function LearningPathsPage() {
                     aria-pressed={level === opt.value}
                     className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-colors ${
                       level === opt.value
-                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/25"
+                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/25 hover:bg-indigo-700"
                         : "bg-slate-50 border border-slate-100 text-slate-600 hover:bg-slate-100"
                     }`}
                   >
@@ -147,7 +146,7 @@ export default function LearningPathsPage() {
                 <button
                   type="button"
                   onClick={() => window.location.reload()}
-                  className="px-6 py-3 rounded-2xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-colors"
+                  className="px-6 py-3 rounded-2xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 active:scale-95 transition-colors"
                 >
                   Try again
                 </button>
@@ -169,7 +168,7 @@ export default function LearningPathsPage() {
                     setSearch("");
                     setLevel("");
                   }}
-                  className="px-6 py-3 rounded-2xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-colors"
+                  className="px-6 py-3 rounded-2xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 active:scale-95 transition-colors"
                 >
                   Clear filters
                 </button>

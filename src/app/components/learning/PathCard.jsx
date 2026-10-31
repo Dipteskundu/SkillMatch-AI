@@ -10,21 +10,15 @@ import {
 } from "lucide-react";
 import { formatDuration } from "../../lib/learningApi";
 
-const LEVEL_STYLES = {
-  beginner: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  intermediate: "bg-amber-50 text-amber-700 border-amber-100",
-  advanced: "bg-rose-50 text-rose-700 border-rose-100",
-};
+// Indigo-only accent across Learning Hub — level reads as text, not color.
+const LEVEL_STYLES = "bg-indigo-50 text-indigo-600 border-indigo-100";
 
 /**
  * A single learning path card for the public catalog.
  * Entire card links to the detail page; optional actions render inside.
  */
 export default function PathCard({ path, index = 0 }) {
-  const level = String(path?.level || "beginner").toLowerCase();
-  const levelClass =
-    LEVEL_STYLES[level] ||
-    "bg-slate-100 text-slate-600 border-slate-200";
+  const levelClass = LEVEL_STYLES;
 
   return (
     <Link

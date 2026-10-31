@@ -118,7 +118,6 @@ function MyLearningContent() {
         <PageWrapper>
           {/* ── Header ── */}
           <section className="relative overflow-hidden">
-            <div className="absolute inset-0 hero-gradient" aria-hidden="true" />
             <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-14 sm:pt-20 pb-10">
               <div className="animate-fade-up max-w-3xl">
                 <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-bold uppercase tracking-widest text-indigo-600 mb-5">
@@ -142,9 +141,9 @@ function MyLearningContent() {
             {notice && (
               <div
                 role="status"
-                className="rounded-2xl bg-emerald-50 border border-emerald-100 p-4 mb-6 flex items-start gap-3"
+                className="rounded-2xl bg-indigo-50 border border-indigo-100 p-4 mb-6 flex items-start gap-3"
               >
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
+                <CheckCircle2 className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" aria-hidden="true" />
                 <p className="text-sm font-semibold text-slate-700">{notice}</p>
                 <button
                   type="button"
@@ -160,12 +159,14 @@ function MyLearningContent() {
             {error && (
               <p
                 role="alert"
-                className="rounded-2xl bg-rose-50 border border-rose-100 p-4 mb-6 text-sm font-semibold text-rose-600 flex items-center gap-2"
+                className="rounded-2xl bg-indigo-50 border border-indigo-100 p-4 mb-6 text-sm font-semibold text-indigo-600 flex items-center gap-2"
               >
                 <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
                 {error}
               </p>
             )}
+
+            {!loading && plans.length > 0 && <AchievementsStrip plans={plans} />}
 
             {loading ? (
               <InlineSkeleton rows={5} />
@@ -212,6 +213,18 @@ function PlanCard({
   const diagnostic = plan.diagnostic;
   const progress = plan.progress || { percent: 0, completedLessons: 0, totalLessons: 0 };
 
+  // Resume target: the first lesson in plan order not yet completed. Falls
+  // back to the plan/path page from the old behavior for drafts & finished plans.
+  const completedSet = new Set((plan.completedLessonIds || []).map(String));
+  const nextLesson = (plan.modules || [])
+    .flatMap((m) => m.lessons || [])
+    .find((l) => !completedSet.has(String(l.lessonId)));
+  const continueHref = !isDraft && nextLesson
+    ? `/learning-hub/lesson?lesson=${encodeURIComponent(nextLesson.lessonId)}&plan=${plan._id}`
+    : isEnrolled && plan.sourcePathSlug
+      ? `/learning-hub/paths/${plan.sourcePathSlug}`
+      : "/learning-hub/paths";
+
   return (
     <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-7 premium-shadow card-hover flex flex-col">
       <div className="flex items-start justify-between gap-4 mb-4">
@@ -250,11 +263,7 @@ function PlanCard({
             <h3 className="text-lg font-black text-slate-900 mb-2 break-words">{plan.title}</h3>
             <div className="flex flex-wrap items-center gap-2">
               <span
-                className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
-                  isDraft
-                    ? "bg-amber-50 text-amber-600 border-amber-100"
-                    : "bg-emerald-50 text-emerald-600 border-emerald-100"
-                }`}
+                className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border bg-indigo-50 text-indigo-600 border-indigo-100"
               >
                 {isDraft ? "Draft" : "Active"}
               </span>
@@ -267,7 +276,7 @@ function PlanCard({
                 </span>
               )}
               {diagnostic?.status === "completed" && (
-                <span className="px-2.5 py-1 rounded-full bg-violet-50 text-violet-600 border border-violet-100 text-[11px] font-bold uppercase tracking-wider">
+                <span className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 text-[11px] font-bold uppercase tracking-wider">
                   Baseline {diagnostic.score}%
                 </span>
               )}
@@ -296,7 +305,7 @@ function PlanCard({
         </div>
         <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 transition-all"
+            className="h-full rounded-full bg-indigo-600 transition-all"
             style={{ width: `${progress.percent}%` }}
           />
         </div>
@@ -320,7 +329,7 @@ function PlanCard({
         <ul className="space-y-1.5 mb-5">
           {plan.expectedOutcomes.slice(0, 3).map((outcome) => (
             <li key={outcome} className="flex items-start gap-2 text-sm text-slate-600">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" aria-hidden="true" />
+              <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" aria-hidden="true" />
               <span className="line-clamp-2">{outcome}</span>
             </li>
           ))}
@@ -329,20 +338,16 @@ function PlanCard({
 
       <div className="mt-auto pt-4 border-t border-slate-100 flex flex-wrap gap-3">
         <Link
-          href={
-            isEnrolled && plan.sourcePathSlug
-              ? `/learning-hub/paths/${plan.sourcePathSlug}`
-              : "/learning-hub/paths"
-          }
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 hover:-translate-y-0.5 transition-all"
+          href={continueHref}
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 hover:-translate-y-0.5 active:scale-95 transition-all"
         >
-          {isDraft ? "Review plan" : "Continue"}
+          {isDraft ? "Review plan" : nextLesson ? "Continue" : "Review plan"}
           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
         </Link>
         {isDraft && (
           <Link
             href="/learning-hub/create-plan"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-xs premium-shadow hover:border-indigo-200 transition-all"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-xs premium-shadow hover:bg-slate-50 hover:border-indigo-200 active:scale-95 transition-all"
           >
             <Sparkles className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
             Edit answers
@@ -362,6 +367,42 @@ function Meta({ icon: Icon, label }) {
   );
 }
 
+function AchievementsStrip({ plans }) {
+  const active = plans.filter((p) => p.status === "active").length;
+  const lessonsDone = plans.reduce((n, p) => n + (p.progress?.completedLessons || 0), 0);
+  const lessonsTotal = plans.reduce((n, p) => n + (p.progress?.totalLessons || 0), 0);
+  const percent = lessonsTotal ? Math.min(100, Math.round((lessonsDone / lessonsTotal) * 100)) : 0;
+  const baseline = plans.find((p) => p.diagnostic?.status === "completed")?.diagnostic?.score;
+
+  const tiles = [
+    { icon: Target, label: "Active plans", value: active },
+    { icon: BookOpen, label: "Lessons completed", value: lessonsDone },
+    { icon: TrendingUp, label: "Overall progress", value: `${percent}%` },
+  ];
+  if (baseline !== undefined) {
+    tiles.push({ icon: CheckCircle2, label: "Baseline score", value: `${baseline}%` });
+  }
+
+  return (
+    <section aria-label="Your achievements" className="mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {tiles.map(({ icon: Icon, label, value }) => (
+          <div
+            key={label}
+            className="rounded-2xl bg-white border border-slate-100 p-4 sm:p-5 premium-shadow"
+          >
+            <Icon className="w-4 h-4 text-indigo-600 mb-3" aria-hidden="true" />
+            <p className="text-2xl font-black text-slate-900 leading-none mb-1.5">{value}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              {label}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function EmptyState() {
   return (
     <div className="mx-auto max-w-2xl text-center bg-white border border-slate-100 rounded-3xl p-10 sm:p-14 premium-shadow">
@@ -376,14 +417,14 @@ function EmptyState() {
       <div className="flex flex-col sm:flex-row justify-center gap-3">
         <Link
           href="/learning-hub/create-plan"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:-translate-y-0.5 transition-all"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:bg-indigo-700 hover:-translate-y-0.5 active:scale-95 transition-all"
         >
           <Sparkles className="w-4 h-4" aria-hidden="true" />
           Create My Learning Plan
         </Link>
         <Link
           href="/learning-hub/paths"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:border-indigo-200 transition-all"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:bg-slate-50 hover:border-indigo-200 active:scale-95 transition-all"
         >
           Browse paths
         </Link>

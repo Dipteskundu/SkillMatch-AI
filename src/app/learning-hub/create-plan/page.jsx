@@ -269,8 +269,8 @@ export default function CreatePlanPage() {
         <main className="flex-1">
           <PageWrapper>
             <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-24 text-center">
-              <div className="w-16 h-16 rounded-3xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto mb-6">
-                <CheckCircle2 className="w-8 h-8 text-emerald-600" aria-hidden="true" />
+              <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-6">
+                <CheckCircle2 className="w-8 h-8 text-indigo-600" aria-hidden="true" />
               </div>
               <h1 className="text-3xl font-black text-slate-900 mb-3">Plan saved.</h1>
               <p className="text-slate-500 mb-8 leading-relaxed">
@@ -279,7 +279,7 @@ export default function CreatePlanPage() {
               </p>
               <Link
                 href="/learning-hub/my-learning"
-                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:bg-indigo-700 hover:-translate-y-0.5 active:scale-95 transition-all"
               >
                 Go to My Learning
                 <ArrowRight className="w-4 h-4" aria-hidden="true" />
@@ -300,7 +300,6 @@ export default function CreatePlanPage() {
         <PageWrapper>
           {/* ── Header ── */}
           <section className="relative overflow-hidden">
-            <div className="absolute inset-0 hero-gradient" aria-hidden="true" />
             <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-14 sm:pt-20 pb-10">
               <div className="animate-fade-up max-w-3xl">
                 <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-bold uppercase tracking-widest text-indigo-600 mb-5">
@@ -374,7 +373,7 @@ export default function CreatePlanPage() {
                               aria-pressed={active}
                               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all ${
                                 active
-                                  ? "bg-indigo-50 border-indigo-200 text-indigo-700"
+                                  ? "bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100"
                                   : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
                               }`}
                             >
@@ -393,7 +392,7 @@ export default function CreatePlanPage() {
                     <button
                       type="button"
                       onClick={() => setStep((s) => s - 1)}
-                      className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:-translate-y-0.5 transition-all"
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:bg-slate-100 hover:-translate-y-0.5 active:scale-95 transition-all"
                     >
                       <ArrowLeft className="w-4 h-4 text-slate-400" aria-hidden="true" />
                       Back
@@ -401,7 +400,7 @@ export default function CreatePlanPage() {
                     <button
                       type="button"
                       onClick={handleGenerate}
-                      className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:-translate-y-0.5 transition-all"
+                      className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:bg-indigo-700 hover:-translate-y-0.5 active:scale-95 transition-all"
                     >
                       <Sparkles className="w-4 h-4" aria-hidden="true" />
                       Generate my plan
@@ -444,7 +443,7 @@ export default function CreatePlanPage() {
                           type="button"
                           onClick={handleStartDiagnostic}
                           disabled={busy === "start-diagnostic"}
-                          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white text-slate-900 font-bold text-sm hover:-translate-y-0.5 transition-all disabled:opacity-60"
+                          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white text-slate-900 font-bold text-sm hover:bg-slate-100 hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-60"
                         >
                           {busy === "start-diagnostic" ? (
                             <>
@@ -461,7 +460,7 @@ export default function CreatePlanPage() {
                         <button
                           type="button"
                           onClick={handleSkipDiagnostic}
-                          className="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-white/10 border border-white/25 text-white font-bold text-sm hover:bg-white/20 transition-all"
+                          className="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-white/10 border border-white/25 text-white font-bold text-sm hover:bg-white/20 active:scale-95 transition-all"
                         >
                           Skip for now
                         </button>
@@ -482,10 +481,10 @@ export default function CreatePlanPage() {
               )}
 
               {diagnosticResult && (
-                <div className="rounded-3xl bg-emerald-50 border border-emerald-100 p-6 mb-6">
+                <div className="rounded-3xl bg-indigo-50 border border-indigo-100 p-6 mb-6">
                   <div className="flex flex-wrap items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-white border border-emerald-100 flex items-center justify-center">
-                      <span className="text-xl font-black text-emerald-600">
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-indigo-100 flex items-center justify-center">
+                      <span className="text-xl font-black text-indigo-600">
                         {diagnosticResult.score}%
                       </span>
                     </div>
@@ -514,7 +513,7 @@ export default function CreatePlanPage() {
                   type="button"
                   onClick={handleSave}
                   disabled={saving}
-                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:-translate-y-0.5 transition-all disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:bg-indigo-700 hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-60"
                 >
                   {saving ? (
                     <>
@@ -532,7 +531,7 @@ export default function CreatePlanPage() {
                   type="button"
                   onClick={handleRegenerate}
                   disabled={busy === "regenerate" || saving}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:-translate-y-0.5 transition-all disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:bg-slate-100 hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-60"
                 >
                   {busy === "regenerate" ? (
                     <>
@@ -576,7 +575,7 @@ function QuestionCard({ question, index, total, value, onChange, onNext, onBack,
       </div>
       <div className="h-1.5 rounded-full bg-slate-100 mb-8 overflow-hidden">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 transition-all"
+          className="h-full rounded-full bg-indigo-600 transition-all"
           style={{ width: `${((index + 1) / total) * 100}%` }}
         />
       </div>
@@ -596,7 +595,7 @@ function QuestionCard({ question, index, total, value, onChange, onNext, onBack,
                 aria-pressed={active}
                 className={`text-left rounded-2xl border p-4 transition-all ${
                   active
-                    ? "bg-indigo-50 border-indigo-300 ring-2 ring-indigo-100"
+                    ? "bg-indigo-50 border-indigo-300 ring-2 ring-indigo-100 hover:bg-indigo-100"
                     : "bg-white border-slate-200 hover:border-slate-300"
                 }`}
               >
@@ -625,7 +624,7 @@ function QuestionCard({ question, index, total, value, onChange, onNext, onBack,
           type="button"
           onClick={onBack}
           disabled={index === 0}
-          className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:hover:translate-y-0"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:bg-slate-100 hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-40 disabled:hover:translate-y-0"
         >
           <ArrowLeft className="w-4 h-4 text-slate-400" aria-hidden="true" />
           Back
@@ -634,7 +633,7 @@ function QuestionCard({ question, index, total, value, onChange, onNext, onBack,
           type="button"
           onClick={onNext}
           disabled={!canAdvance}
-          className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:-translate-y-0.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:bg-indigo-700 hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0"
         >
           Continue
           <ArrowRight className="w-4 h-4" aria-hidden="true" />
@@ -694,7 +693,7 @@ function DiagnosticQuiz({ attempt, answers, onAnswer, onSubmit, submitting }) {
                     aria-pressed={active}
                     className={`text-left rounded-xl border px-3.5 py-2.5 text-xs font-semibold transition-all ${
                       active
-                        ? "bg-indigo-500/30 border-indigo-400 text-white"
+                        ? "bg-indigo-500/30 border-indigo-400 text-white hover:bg-indigo-500/40"
                         : "bg-white/5 border-white/15 text-slate-300 hover:bg-white/10"
                     }`}
                   >
@@ -711,7 +710,7 @@ function DiagnosticQuiz({ attempt, answers, onAnswer, onSubmit, submitting }) {
         type="button"
         onClick={onSubmit}
         disabled={submitting}
-        className="mt-6 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white text-slate-900 font-bold text-sm hover:-translate-y-0.5 transition-all disabled:opacity-60"
+        className="mt-6 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-white text-slate-900 font-bold text-sm hover:bg-slate-100 hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-60"
       >
         {submitting ? (
           <>
@@ -770,7 +769,7 @@ function PlanReview({ plan, onChange }) {
             {plan.startingLevel} → {String(plan.targetOutcome).replace(/-/g, " ")}
           </p>
         </div>
-        <span className="px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100 text-xs font-bold uppercase tracking-widest text-amber-600">
+        <span className="px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-bold uppercase tracking-widest text-indigo-600">
           Draft
         </span>
       </div>
@@ -787,13 +786,13 @@ function PlanReview({ plan, onChange }) {
       {plan.expectedOutcomes?.length > 0 && (
         <div className="mb-7">
           <h3 className="flex items-center gap-2 font-bold text-slate-900 mb-3 text-sm">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" aria-hidden="true" />
+            <CheckCircle2 className="w-4 h-4 text-indigo-600" aria-hidden="true" />
             What you&apos;ll be able to do
           </h3>
           <ul className="space-y-2">
             {plan.expectedOutcomes.map((outcome) => (
               <li key={outcome} className="text-sm text-slate-600 flex items-start gap-2.5">
-                <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" aria-hidden="true" />
+                <Check className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" aria-hidden="true" />
                 {outcome}
               </li>
             ))}
@@ -851,7 +850,7 @@ function ErrorNote({ message }) {
   return (
     <p
       role="alert"
-      className="mt-4 text-sm font-semibold text-rose-600 inline-flex items-center gap-2"
+      className="mt-4 text-sm font-semibold text-indigo-600 inline-flex items-center gap-2"
     >
       <X className="w-4 h-4 shrink-0" aria-hidden="true" />
       {message}

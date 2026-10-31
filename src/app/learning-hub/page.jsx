@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "../components/Navbar/Navbar";
@@ -24,7 +24,11 @@ import {
   Target,
   Clock,
   RefreshCcw,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+
+const PATHS_PER_PAGE = 6;
 
 const HOW_IT_WORKS = [
   { icon: Compass, title: "Explore", desc: "Browse curated paths and previews — no sign-in needed." },
@@ -70,6 +74,8 @@ export default function LearningHubPage() {
   const [paths, setPaths] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const gridRef = useRef(null);
   const requireLogin = useRequireLogin();
   const router = useRouter();
 
@@ -80,12 +86,20 @@ export default function LearningHubPage() {
     router.push("/learning-hub/create-plan");
   };
 
+  const totalPages = Math.ceil(paths.length / PATHS_PER_PAGE);
+  const visiblePaths = paths.slice((page - 1) * PATHS_PER_PAGE, page * PATHS_PER_PAGE);
+
+  const goToPage = (n) => {
+    setPage(Math.min(Math.max(1, n), totalPages || 1));
+    gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const data = await fetchPaths();
-        if (!cancelled) setPaths(data.slice(0, 6));
+        if (!cancelled) setPaths(data);
       } catch {
         if (!cancelled) setError("Could not load learning paths right now.");
       } finally {
@@ -105,7 +119,6 @@ export default function LearningHubPage() {
         <PageWrapper>
           {/* ── 1. Hero ─────────────────────────────────────── */}
           <section className="relative overflow-hidden">
-            <div className="absolute inset-0 hero-gradient" aria-hidden="true" />
             <div
               className="absolute top-0 left-1/2 -translate-x-1/2 w-[64rem] h-[64rem] rounded-full bg-indigo-600/10 blur-3xl opacity-70"
               aria-hidden="true"
@@ -131,7 +144,7 @@ export default function LearningHubPage() {
                   <button
                     type="button"
                     onClick={handleCreatePlan}
-                    className="group inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:shadow-xl hover:shadow-indigo-600/30 hover:-translate-y-0.5 transition-all"
+                    className="group inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-600/30 hover:-translate-y-0.5 active:scale-95 transition-all"
                   >
                     Create My Learning Plan
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
@@ -139,7 +152,7 @@ export default function LearningHubPage() {
 
                   <Link
                     href="/learning-hub/paths"
-                    className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:border-indigo-200 hover:-translate-y-0.5 transition-all"
+                    className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:bg-slate-50 hover:border-indigo-200 hover:-translate-y-0.5 active:scale-95 transition-all"
                   >
                     <Compass className="w-4 h-4 text-indigo-600" aria-hidden="true" />
                     Explore Learning Paths
@@ -148,15 +161,15 @@ export default function LearningHubPage() {
 
                 <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-semibold text-slate-400">
                   <span className="inline-flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" aria-hidden="true" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
                     No sign-in needed to browse
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" aria-hidden="true" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
                     Diagnostic test optional
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" aria-hidden="true" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
                     Resume anytime
                   </span>
                 </div>
@@ -190,11 +203,60 @@ export default function LearningHubPage() {
             )}
 
             {!loading && !error && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {paths.map((path, i) => (
-                  <PathCard key={path._id} path={path} index={i} />
-                ))}
-              </div>
+              <>
+                <div
+                  ref={gridRef}
+                  key={page}
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 scroll-mt-24"
+                >
+                  {visiblePaths.map((path, i) => (
+                    <PathCard key={path._id} path={path} index={i} />
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <nav
+                    className="mt-10 flex items-center justify-center flex-wrap gap-2"
+                    aria-label="Explore paths pages"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => goToPage(page - 1)}
+                      disabled={page === 1}
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 text-sm font-bold hover:bg-slate-100 hover:border-indigo-200 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+                      Prev
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => goToPage(n)}
+                        aria-current={n === page ? "page" : undefined}
+                        className={`w-10 h-10 rounded-xl text-sm font-bold active:scale-95 transition-all ${
+                          n === page
+                            ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/25 hover:bg-indigo-700"
+                            : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-indigo-200"
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() => goToPage(page + 1)}
+                      disabled={page === totalPages}
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 text-sm font-bold hover:bg-slate-100 hover:border-indigo-200 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                  </nav>
+                )}
+              </>
             )}
           </section>
 
@@ -231,8 +293,6 @@ export default function LearningHubPage() {
 
               {/* Sample roadmap */}
               <div className="relative bg-slate-900 rounded-3xl sm:rounded-[2.5rem] p-7 sm:p-10 text-white overflow-hidden premium-shadow">
-                <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-indigo-600/20 to-transparent" aria-hidden="true" />
-
                 <div className="relative">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
@@ -312,7 +372,7 @@ export default function LearningHubPage() {
                             key={opt}
                             className={`text-xs px-3 py-1.5 rounded-lg border ${
                               oi === fmt.answer
-                                ? "bg-emerald-50 border-emerald-100 text-emerald-700 font-semibold"
+                                ? "bg-indigo-50 border-indigo-100 text-indigo-600 font-semibold"
                                 : "bg-white border-slate-100 text-slate-500"
                             }`}
                           >
@@ -331,7 +391,7 @@ export default function LearningHubPage() {
             <div className="mt-10 text-center">
               <Link
                 href="/learning-hub/assessments"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:border-indigo-200 hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:bg-slate-50 hover:border-indigo-200 hover:-translate-y-0.5 active:scale-95 transition-all"
               >
                 Browse assessment types
                 <ArrowRight className="w-4 h-4 text-indigo-600" aria-hidden="true" />
@@ -371,7 +431,7 @@ export default function LearningHubPage() {
 
           {/* ── 6. Benefits + CTA ────────────────────────────── */}
           <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-            <div className="relative overflow-hidden rounded-3xl sm:rounded-[2.5rem] bg-gradient-to-r from-indigo-600 to-violet-600 text-white premium-shadow">
+            <div className="relative overflow-hidden rounded-3xl sm:rounded-[2.5rem] bg-indigo-600 text-white premium-shadow">
               <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
               <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
 
@@ -390,14 +450,14 @@ export default function LearningHubPage() {
                     <button
                       type="button"
                       onClick={handleCreatePlan}
-                      className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white text-indigo-700 font-bold text-sm hover:bg-slate-100 hover:-translate-y-0.5 transition-all"
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white text-indigo-700 font-bold text-sm hover:bg-slate-100 hover:-translate-y-0.5 active:scale-95 transition-all"
                     >
                       Create My Learning Plan
                       <ArrowRight className="w-4 h-4" aria-hidden="true" />
                     </button>
                     <Link
                       href="/signup"
-                      className="inline-flex items-center justify-center px-6 py-3.5 rounded-2xl bg-white/10 border border-white/25 text-white font-bold text-sm hover:bg-white/20 transition-all"
+                      className="inline-flex items-center justify-center px-6 py-3.5 rounded-2xl bg-white/10 border border-white/25 text-white font-bold text-sm hover:bg-white/20 active:scale-95 transition-all"
                     >
                       Sign up free
                     </Link>

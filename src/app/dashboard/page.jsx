@@ -169,7 +169,7 @@ export default function Dashboard() {
                                 <Menu className="w-5 h-5" />
                             </button>
                             <span className="text-sm font-black text-slate-900 tracking-tight">
-                                Skill<span style={{ color: "#6452F5" }}>Match</span>
+                                Job<span style={{ color: "#6452F5" }}>Match</span>
                             </span>
                         </div>
 

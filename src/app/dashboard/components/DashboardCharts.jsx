@@ -186,6 +186,120 @@ export function AdminStatsChart({ stats }) {
   );
 }
 
+// ── Learning: Score trend over time (My Assessments overview) ────────────────
+export function LearningScoreTrendChart({ attempts = [] }) {
+  const data = attempts
+    .filter(a => typeof a.score === "number")
+    .sort((a, b) => new Date(a.startedAt || a.submittedAt) - new Date(b.startedAt || b.submittedAt))
+    .slice(-20)
+    .map(a => ({
+      name: new Date(a.startedAt || a.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      score: a.score,
+    }));
+
+  if (!data.length) return <EmptyChart label="Take your first assessment" />;
+
+  return (
+    <ChartCard title="Score Trend">
+      <ResponsiveContainer width="100%" height={200}>
+        <AreaChart data={data} margin={{ top: 4, right: 8, left: -25, bottom: 0 }}>
+          <defs>
+            <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
+              <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+          <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 700, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <Tooltip {...TooltipStyle} formatter={(v) => [`${v}%`, "Score"]} />
+          <Area type="monotone" dataKey="score" name="Score" stroke="#6366f1" strokeWidth={2.5}
+            fill="url(#scoreGrad)" dot={{ r: 3, fill: "#6366f1", strokeWidth: 0 }} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </ChartCard>
+  );
+}
+
+// ── Learning: Topic-wise performance bars ────────────────────────────────────
+export function LearningTopicChart({ topics = [] }) {
+  const data = [...topics]
+    .sort((a, b) => (b.percent ?? 0) - (a.percent ?? 0))
+    .slice(0, 8)
+    .map(t => ({ name: t.topic, percent: Number(t.percent) || 0 }));
+
+  if (!data.length) return <EmptyChart label="No topic data yet" />;
+
+  return (
+    <ChartCard title="Topic Performance">
+      <ResponsiveContainer width="100%" height={data.length > 5 ? 240 : 190}>
+        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+          <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey="name" width={92} tick={{ fontSize: 10, fontWeight: 700, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <Tooltip {...TooltipStyle} formatter={(v) => [`${v}%`, "Correct"]} />
+          <Bar dataKey="percent" barSize={12} radius={[0, 6, 6, 0]}>
+            {data.map((d, i) => (
+              <Cell key={i} fill={d.percent >= 60 ? "#10b981" : d.percent >= 40 ? "#f59e0b" : "#ef4444"} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </ChartCard>
+  );
+}
+
+// ── Learning: Course progress rings ──────────────────────────────────────────
+export function LearningProgressRings({ plans = [] }) {
+  const active = plans
+    .filter(p => (p.progress?.percent ?? 0) < 100)
+    .slice(0, 4);
+  if (!active.length) return <EmptyChart label="No courses in progress" />;
+
+  const colors = ["#6366f1", "#8b5cf6", "#a78bfa", "#10b981"];
+  const data = active.map((p, i) => ({
+    name: (p.title || "Course").slice(0, 20),
+    value: p.progress?.percent ?? 0,
+    fill: colors[i % colors.length],
+  }));
+
+  return (
+    <ChartCard title="Course Progress">
+      <ResponsiveContainer width="100%" height={200}>
+        <RadialBarChart data={data} cx="50%" cy="50%" innerRadius="28%" outerRadius="92%"
+          startAngle={90} endAngle={-270} barSize={13}>
+          <RadialBar dataKey="value" cornerRadius={6} background={{ fill: "var(--secondary)" }} />
+          <Tooltip {...TooltipStyle} formatter={(v) => [`${v}%`, "Complete"]} />
+          <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, fontWeight: 600 }} />
+        </RadialBarChart>
+      </ResponsiveContainer>
+    </ChartCard>
+  );
+}
+
+// ── Learning: Weekly study activity ──────────────────────────────────────────
+export function LearningActivityChart({ weekly = [] }) {
+  if (!weekly.length || weekly.every(w => !w.lessons && !w.assessments)) {
+    return <EmptyChart label="No study activity yet" />;
+  }
+
+  return (
+    <ChartCard title="Weekly Study Activity">
+      <ResponsiveContainer width="100%" height={200}>
+        <BarChart data={weekly} barSize={12} margin={{ top: 4, right: 8, left: -25, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+          <XAxis dataKey="label" tick={{ fontSize: 10, fontWeight: 700, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <Tooltip {...TooltipStyle} />
+          <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, fontWeight: 600 }} />
+          <Bar dataKey="lessons" name="Lessons" fill="#6366f1" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="assessments" name="Assessments" fill="#10b981" radius={[6, 6, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </ChartCard>
+  );
+}
+
 // ── Shared wrappers ───────────────────────────────────────────────────────────
 function ChartCard({ title, children }) {
   return (

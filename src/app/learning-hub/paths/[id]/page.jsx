@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "../../../components/Navbar/Navbar";
@@ -14,6 +14,8 @@ import {
   apiErrorMessage,
 } from "../../../lib/learningApi";
 import { useRequireLogin } from "../../../lib/requireLogin";
+import { useAuth } from "../../../lib/AuthContext";
+import { signInUrlWithReturn } from "../../../lib/redirect";
 import {
   ArrowLeft,
   ArrowRight,
@@ -30,16 +32,14 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-const LEVEL_STYLES = {
-  beginner: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  intermediate: "bg-amber-50 text-amber-700 border-amber-100",
-  advanced: "bg-rose-50 text-rose-700 border-rose-100",
-};
+// Indigo-only accent across Learning Hub — level reads as text, not color.
+const LEVEL_STYLES = "bg-indigo-50 text-indigo-600 border-indigo-100";
 
 export default function PathDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const requireLogin = useRequireLogin();
+  const { user, loading: authLoading } = useAuth();
 
   const [path, setPath] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -71,15 +71,26 @@ export default function PathDetailPage() {
     };
   }, [id]);
 
-  // Copies the published path into a personal plan. Enrollment is idempotent
-  // server-side, so a double-click cannot create a second plan.
-  const handleEnroll = async () => {
-    if (!requireLogin() || enrolling || !path) return;
+  // w3schools flow: Start → (login wall, once) → straight into lesson content.
+  // Falls back to the first lesson; a returning user resumes at the next
+  // incomplete one because the enroll response carries completedLessonIds.
+  const enrollAndJump = async () => {
+    if (enrolling || !id) return;
     setEnrollError("");
     setEnrolling(true);
     try {
-      const plan = await enrollInPath(path.slug || id);
-      router.push(`/learning-hub/my-learning?enrolled=${encodeURIComponent(plan?._id || "")}`);
+      const plan = await enrollInPath(id);
+      const completed = new Set((plan?.completedLessonIds || []).map(String));
+      const flat = (plan?.modules || []).flatMap((m) => m.lessons || []);
+      const target = flat.find((l) => !completed.has(String(l.lessonId))) || flat[0];
+      if (target && plan?._id) {
+        router.push(
+          `/learning-hub/lesson?lesson=${encodeURIComponent(String(target.lessonId))}&plan=${encodeURIComponent(String(plan._id))}`,
+        );
+      } else {
+        // Path has no published lessons yet — land on the plan list as before.
+        router.push(`/learning-hub/my-learning?enrolled=${encodeURIComponent(plan?._id || "")}`);
+      }
     } catch (err) {
       setEnrollError(
         apiErrorMessage(err, "Could not enroll in this path. Please try again."),
@@ -87,6 +98,35 @@ export default function PathDetailPage() {
       setEnrolling(false);
     }
   };
+
+  const handleStart = () => {
+    if (!id || enrolling) return;
+    if (requireLogin()) {
+      enrollAndJump();
+      return;
+    }
+    // Guest: tag the URL so the post-sign-in return auto-launches the path.
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("start")) {
+      url.searchParams.set("start", "1");
+      window.history.replaceState(null, "", url.pathname + url.search);
+    }
+    window.location.assign(signInUrlWithReturn(url.pathname + url.search));
+  };
+
+  // Auto-start: learner came back from the sign-in wall with ?start=1.
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (authLoading || !user) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("start") !== "1" || autoStartedRef.current) return;
+    autoStartedRef.current = true;
+    params.delete("start");
+    const qs = params.toString();
+    window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : ""));
+    enrollAndJump();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires once per sign-in return
+  }, [user, authLoading]);
 
   const handleCreatePlan = () => {
     if (!requireLogin()) return;
@@ -114,8 +154,8 @@ export default function PathDetailPage() {
         <Navbar />
         <main className="flex-1">
           <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 pt-24 pb-24 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center mx-auto mb-6">
-              <AlertTriangle className="w-7 h-7 text-rose-600" aria-hidden="true" />
+            <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle className="w-7 h-7 text-indigo-600" aria-hidden="true" />
             </div>
             <h1 className="text-2xl font-black text-slate-900 mb-3">
               {error || "Learning path not found"}
@@ -125,7 +165,7 @@ export default function PathDetailPage() {
             </p>
             <Link
               href="/learning-hub/paths"
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 active:scale-95 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" aria-hidden="true" />
               Back to all paths
@@ -137,9 +177,7 @@ export default function PathDetailPage() {
     );
   }
 
-  const levelClass =
-    LEVEL_STYLES[String(path.level).toLowerCase()] ||
-    "bg-slate-100 text-slate-600 border-slate-200";
+  const levelClass = LEVEL_STYLES;
 
   const totalLessons = path.lessonCount ?? 0;
   const previewLessons = path.modules.reduce(
@@ -155,7 +193,6 @@ export default function PathDetailPage() {
         <PageWrapper>
           {/* ── Hero ── */}
           <section className="relative overflow-hidden">
-            <div className="absolute inset-0 hero-gradient" aria-hidden="true" />
             <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 pb-12">
               <Link
                 href="/learning-hub/paths"
@@ -205,35 +242,36 @@ export default function PathDetailPage() {
               <div className="mt-9 flex flex-col sm:flex-row gap-3">
                 <button
                   type="button"
-                  onClick={handleCreatePlan}
-                  className="group inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:shadow-xl hover:-translate-y-0.5 transition-all"
-                >
-                  <Sparkles className="w-4 h-4" aria-hidden="true" />
-                  Create My Learning Plan
-                </button>
-                <button
-                  type="button"
-                  onClick={handleEnroll}
+                  onClick={handleStart}
                   disabled={enrolling}
-                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:border-indigo-200 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
+                  className="group inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:bg-indigo-700 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-60 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
                 >
                   {enrolling ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin text-indigo-600" aria-hidden="true" />
-                      Enrolling…
+                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                      Starting…
                     </>
                   ) : (
                     <>
-                      Enroll in this path
-                      <ArrowRight className="w-4 h-4 text-indigo-600" aria-hidden="true" />
+                      <Play className="w-4 h-4" aria-hidden="true" />
+                      Start this path
+                      <ArrowRight className="w-4 h-4" aria-hidden="true" />
                     </>
                   )}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreatePlan}
+                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold text-sm premium-shadow hover:bg-slate-50 hover:border-indigo-200 hover:-translate-y-0.5 active:scale-95 transition-all"
+                >
+                  <Sparkles className="w-4 h-4 text-indigo-600" aria-hidden="true" />
+                  Customize with AI instead
                 </button>
               </div>
               {enrollError && (
                 <p
                   role="alert"
-                  className="mt-3 text-xs font-semibold text-rose-600 inline-flex items-center gap-1.5"
+                  className="mt-3 text-xs font-semibold text-indigo-600 inline-flex items-center gap-1.5"
                 >
                   <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
                   {enrollError}
@@ -260,7 +298,7 @@ export default function PathDetailPage() {
                       key={obj}
                       className="flex items-start gap-3 text-sm text-slate-600 leading-relaxed"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" aria-hidden="true" />
+                      <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" aria-hidden="true" />
                       {obj}
                     </li>
                   ))}
@@ -340,7 +378,7 @@ export default function PathDetailPage() {
                         <span
                           className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
                             lesson.isPreview
-                              ? "bg-emerald-50 border border-emerald-100 text-emerald-600"
+                              ? "bg-indigo-50 border border-indigo-100 text-indigo-600"
                               : "bg-slate-50 border border-slate-100 text-slate-400"
                           }`}
                           aria-hidden="true"
@@ -367,7 +405,7 @@ export default function PathDetailPage() {
                         </span>
 
                         {lesson.isPreview ? (
-                          <span className="text-[11px] font-bold text-emerald-600 shrink-0">
+                          <span className="text-[11px] font-bold text-indigo-600 shrink-0">
                             Preview
                           </span>
                         ) : (
@@ -398,17 +436,27 @@ export default function PathDetailPage() {
               <div className="relative">
                 <h3 className="text-xl font-bold mb-1.5">Ready to start {path.title}?</h3>
                 <p className="text-slate-400 text-sm max-w-lg">
-                  Generate a personalized plan, or enroll directly and follow the
-                  published order.
+                  Jump straight into the first lesson — your progress is saved
+                  to your account.
                 </p>
               </div>
               <button
                 type="button"
-                onClick={handleCreatePlan}
-                className="relative inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-white text-slate-900 font-bold text-sm hover:bg-slate-100 hover:-translate-y-0.5 transition-all shrink-0"
+                onClick={handleStart}
+                disabled={enrolling}
+                className="relative inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-white text-slate-900 font-bold text-sm hover:bg-slate-100 hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
               >
-                Get started
-                <ArrowRight className="w-4 h-4 text-indigo-600" aria-hidden="true" />
+                {enrolling ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-indigo-600" aria-hidden="true" />
+                    Starting…
+                  </>
+                ) : (
+                  <>
+                    Get started
+                    <ArrowRight className="w-4 h-4 text-indigo-600" aria-hidden="true" />
+                  </>
+                )}
               </button>
             </div>
           </section>
