@@ -12,7 +12,7 @@ import {
   AlertCircle,
   Phone,
 } from "lucide-react";
-import { devLog, safeError } from "../../lib/logger";
+import { safeError } from "../../lib/logger";
 
 export default function InterviewScheduler({
   applicant,
@@ -103,8 +103,6 @@ export default function InterviewScheduler({
         company: applicant.company,
       };
 
-      devLog("Interview Details being sent:", interviewDetails);
-      devLog("Applicant object:", applicant);
 
       await onSchedule(interviewDetails);
       onClose();

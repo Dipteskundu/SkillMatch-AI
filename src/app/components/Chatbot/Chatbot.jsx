@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle, Send, Trash2, UserRound, X, ExternalLink } from "lucide-react";
+import { MessageCircle, Send, Trash2, UserRound, X, ExternalLink, Sparkles, MessagesSquare } from "lucide-react";
 import { useAuth } from "../../lib/AuthContext";
 import { askBot, fetchHistory, clearHistory } from "../../lib/chatbotApi";
 import Avatar from "../common/Avatar";
+import AgentOffers from "./AgentOffers";
 
 const WELCOME_MESSAGE = {
   id: "welcome",
@@ -23,6 +24,7 @@ export default function Chatbot() {
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState("chat");
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
   const [isResponding, setIsResponding] = useState(false);
@@ -217,6 +219,33 @@ export default function Chatbot() {
               </div>
             </div>
 
+            {/* View switcher: chat / agent offers */}
+            <div className="flex shrink-0 gap-1.5 border-b border-slate-100 px-5 pb-2.5 bg-white">
+              {[
+                { id: "chat", label: "Chat", icon: MessagesSquare },
+                { id: "offers", label: "Agent Offers", icon: Sparkles },
+              ].map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => setTab(id)}
+                  className={
+                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-semibold transition-all " +
+                    (tab === id
+                      ? "bg-[#6452F5] text-white shadow-sm"
+                      : "text-slate-500 hover:bg-slate-100")
+                  }
+                  aria-current={tab === id}
+                >
+                  <Icon className="h-3.5 w-3.5" /> {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Panel content */}
+            {tab === "offers" ? (
+              <AgentOffers />
+            ) : (
+            <>
             {/* Message list */}
             <div
               ref={scrollRef}
@@ -309,6 +338,8 @@ export default function Chatbot() {
                 </button>
               </form>
             </div>
+            </>
+            )}
           </section>
         )}
 

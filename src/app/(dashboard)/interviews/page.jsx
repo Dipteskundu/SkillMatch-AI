@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import InterviewScheduler from "../../components/InterviewScheduler/InterviewScheduler";
 import InterviewDetailsModal from "../../components/InterviewDetailsModal/InterviewDetailsModal";
-import { devLog, safeError } from "../../lib/logger";
+import { safeError } from "../../lib/logger";
 
 export default function InterviewsPage() {
   const { user, userProfile, role, isAuthenticated } = useAuth();
