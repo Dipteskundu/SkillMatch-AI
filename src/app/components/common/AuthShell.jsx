@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Rocket, ArrowLeft, X, Github } from "lucide-react";
+import { Rocket, ArrowLeft, X, Github, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../../lib/AuthContext";
+import { googleSignIn, googleSignInErrorMessage } from "../../lib/firebase";
+import { postLoginPath } from "../../lib/redirect";
 import {
   Target,
   Shield,
@@ -17,7 +20,8 @@ import {
  * Shared auth layout, Pixelcot-style: pastel gradient page, one big rounded
  * card — form on the left, animated orbit illustration on the right. Both
  * pages pass heading + panel copy; children render between the heading and
- * the shared "Or login with" row. Social buttons toast "coming soon".
+ * the shared "Or login with" row. Google runs the real Firebase sign-in flow;
+ * other social buttons toast "coming soon".
  */
 
 // Domain orbit: icon, which ring (0 inner → 2 outer), angle in degrees.
@@ -97,6 +101,7 @@ export default function AuthShell({
   const router = useRouter();
   const [toast, setToast] = useState(null);
   const toastTimerRef = useRef(null);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Back to wherever the user came from; direct URL entry falls back to home.
   const goBack = () => {
@@ -114,6 +119,27 @@ export default function AuthShell({
     setToast(`${name} sign-in is coming soon.`);
     clearTimeout(toastTimerRef.current);
     toastTimerRef.current = setTimeout(() => setToast(null), 3000);
+  };
+
+  // Google sign-in: open the Firebase popup, verify the ID token on the
+  // backend (which creates or links the user and issues a JWT session), then
+  // redirect the user back to the page they came from.
+  const handleGoogle = async () => {
+    setGoogleLoading(true);
+    try {
+      const { idToken } = await googleSignIn();
+      const result = await loginWithGoogle(idToken);
+      if (!result.success) {
+        setToast(result.message || "Google sign-in failed.");
+        return;
+      }
+      sessionStorage.setItem("showWelcome", "1");
+      router.push(postLoginPath());
+    } catch (err) {
+      setToast(googleSignInErrorMessage(err));
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -168,18 +194,41 @@ export default function AuthShell({
                 <span className="h-px flex-1 bg-slate-200" />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {SOCIALS.map(({ name, svg }) => (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => comingSoon(name)}
-                    title={`${name} sign-in — coming soon`}
-                    className="h-12 rounded-xl border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 hover:border-indigo-200 transition-all active:scale-[0.97]"
-                  >
-                    {svg}
-                    <span className="sr-only">{name}</span>
-                  </button>
-                ))}
+                {SOCIALS.map(({ name, svg }) => {
+                  if (name === "Google") {
+                    return (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => handleGoogle()}
+                        title="Google sign-in"
+                        className={`h-12 rounded-xl border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 hover:border-indigo-200 transition-all active:scale-[0.97] ${
+                          googleLoading
+                            ? "opacity-50 cursor-not-allowed"
+                            : "hover:bg-indigo-50 hover:border-indigo-200 transition-all active:scale-[0.97]"
+                        }`}
+                      >
+                        {svg}
+                        <span className="sr-only">Google</span>
+                        {googleLoading && (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                        )}
+                      </button>
+                    );
+                  }
+                  return (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => comingSoon(name)}
+                      title={`${name} sign-in — coming soon`}
+                      className="h-12 rounded-xl border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 hover:border-indigo-200 transition-all active:scale-[0.97]"
+                    >
+                      {svg}
+                      <span className="sr-only">{name}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
