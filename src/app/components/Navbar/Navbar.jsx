@@ -339,23 +339,6 @@ export default function Navbar() {
                     )}
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={toggleTheme}
-                    className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                    aria-label="Toggle theme"
-                  >
-                    {mounted ? (
-                      theme === "dark" ? (
-                        <Sun className="w-[18px] h-[18px]" />
-                      ) : (
-                        <Moon className="w-[18px] h-[18px]" />
-                      )
-                    ) : (
-                      <Sun className="w-[18px] h-[18px]" />
-                    )}
-                  </button>
-
                   {/* Desktop Profile Dropdown */}
                   <div className="relative hidden md:block" ref={profileRef}>
                     <button
@@ -431,6 +414,23 @@ export default function Navbar() {
                   </div>
                 </>
               )}
+
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                aria-label="Toggle theme"
+              >
+                {mounted ? (
+                  theme === "dark" ? (
+                    <Sun className="w-[18px] h-[18px]" />
+                  ) : (
+                    <Moon className="w-[18px] h-[18px]" />
+                  )
+                ) : (
+                  <Sun className="w-[18px] h-[18px]" />
+                )}
+              </button>
 
               {/* Mobile Hamburger */}
               <button
