@@ -2,233 +2,277 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Rocket, Mail, Lock, User, Eye, EyeOff, CheckCircle2, ArrowLeft, Briefcase, Building2 } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  Check,
+  Briefcase,
+  Building2,
+  Loader2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { safeError } from "../lib/logger";
 import { useAuth } from "../lib/AuthContext";
 import { postLoginPath } from "../lib/redirect";
+import AuthShell from "../components/common/AuthShell";
+
+// 16px inputs prevent the iOS focus-zoom jump; focus style matches Learning Hub.
+const inputClass =
+  "w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-base text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 focus:bg-white";
+
+const ROLES = [
+  { value: "candidate", label: "Candidate", icon: Briefcase },
+  { value: "recruiter", label: "Recruiter", icon: Building2 },
+];
 
 export default function SignUpPage() {
-    const [mounted, setMounted] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [role, setRole] = useState("candidate"); // candidate or recruiter
-    const [fullName, setFullName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+  const [mounted, setMounted] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [role, setRole] = useState("candidate"); // candidate or recruiter
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-    const { register } = useAuth();
-    const router = useRouter();
+  const { register } = useAuth();
+  const router = useRouter();
 
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-    // Avoid hydration mismatches caused by browser extensions mutating inputs
-    // before React hydrates (e.g., temp mail / password managers).
-    if (!mounted) {
-        return <div className="min-h-screen bg-white" />;
+  // Avoid hydration mismatches caused by browser extensions mutating inputs
+  // before React hydrates (e.g., temp mail / password managers).
+  if (!mounted) {
+    return <div className="min-h-screen bg-white" />;
+  }
+
+  const handleEmailSignUp = async (event) => {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const result = await register(email, password, role, fullName);
+      if (!result.success) {
+        setError(result.message);
+        return;
+      }
+      router.push(postLoginPath());
+    } catch (err) {
+      safeError("Email sign up error", err);
+      setError("Failed to create account");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const handleEmailSignUp = async (event) => {
-        event.preventDefault();
-        setError("");
-        setLoading(true);
-
-        try {
-            const result = await register(email, password, role, fullName);
-            if (!result.success) {
-                setError(result.message);
-                return;
-            }
-            router.push(postLoginPath());
-        } catch (err) {
-            safeError("Email sign up error", err);
-            setError("Failed to create account");
-        } finally {
-            setLoading(false);
+  return (
+    <div className="min-h-screen bg-white">
+      <AuthShell
+        heading="Create your account!"
+        subheading="Join the platform where skills get verified before they get hired."
+        panelTitle={
+          <>
+            Launch your <span className="text-indigo-600">next big thing.</span>
+          </>
         }
-    };
+        panelCaption={
+          <>
+            From <b className="text-slate-700">first match to first offer</b> —
+            AI matching, skill verification, and interviews in one place.
+          </>
+        }
+      >
+        <form
+          onSubmit={handleEmailSignUp}
+          className="animate-card-rise flex flex-col gap-5"
+          style={{ animationDelay: "120ms" }}
+        >
+          {/* Role selection */}
+          <div>
+            <p className="block text-sm font-semibold text-slate-700 mb-1.5">
+              I&apos;m joining as
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {ROLES.map(({ value, label, icon: Icon }) => {
+                const active = role === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setRole(value)}
+                    aria-pressed={active}
+                    className={`flex items-center gap-2.5 h-12 px-4 rounded-2xl border-2 font-bold text-sm transition-all active:scale-[0.98] ${
+                      active
+                        ? "border-indigo-600 bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                        : "border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200"
+                    }`}
+                  >
+                    <Icon
+                      className="w-[18px] h-[18px]"
+                      aria-hidden="true"
+                    />
+                    {label}
+                    {active && (
+                      <Check
+                        className="animate-badge-pop w-4 h-4 ml-auto"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-    return (
-        <div className="min-h-screen bg-[#fdfdfe] flex flex-col lg:flex-row-reverse relative">
-            {/* Fixed Back Button */}
-            <Link
-                href="/"
-                className="fixed top-6 left-6 z-[100] flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-md border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all group"
+          <div>
+            <label
+              htmlFor="fullName"
+              className="block text-sm font-semibold text-slate-700 mb-1.5"
             >
-                <ArrowLeft className="w-5 h-5 text-slate-600 group-hover:-translate-x-1 transition-transform" />
-                <span className="text-sm font-bold text-slate-900">Back</span>
-            </Link>
-
-            {/* Side Content (Right side for variety) */}
-            <div className="hidden lg:flex lg:w-1/2 bg-indigo-600 relative overflow-hidden flex-col justify-between p-16 animate-slide-in-right">
-                <div className="relative z-10">
-                    <Link href="/" className="flex items-center gap-2 group w-fit">
-                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-indigo-600 premium-shadow transition-transform group-hover:rotate-6">
-                            <Rocket className="w-6 h-6" />
-                        </div>
-                        <span className="text-2xl font-black text-white tracking-tight">
-                            JobMatch<span className="text-indigo-200">AI</span>
-                        </span>
-                    </Link>
-                </div>
-
-                <div className="relative z-10">
-                    <h1 className="text-5xl font-black text-white leading-tight mb-8">
-                        Launch your <br />
-                        <span className="text-indigo-200">next big thing.</span>
-                    </h1>
-
-                    <div className="space-y-6">
-                        {[
-                            "Personalized AI job matching",
-                            "Direct connection with top recruiters",
-                            "Real-time salary market insights",
-                            "Expert career growth resources"
-                        ].map((feature, i) => (
-                            <div key={i} className="flex items-center gap-4 text-white/90">
-                                <CheckCircle2 className="w-6 h-6 text-indigo-300" />
-                                <span className="text-lg font-medium">{feature}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="relative z-10 p-8 bg-white/10 backdrop-blur-md rounded-[2rem] border border-white/20">
-                    <p className="text-white text-lg font-medium italic mb-4">
-                        &quot;JobMatch AI helped me land my Senior Product Designer role in less than 2 weeks. The AI suggestions were spot on!&quot;
-                    </p>
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-white/20 rounded-full"></div>
-                        <div>
-                            <p className="text-sm font-bold text-white uppercase tracking-wider">Sarah Jenkins</p>
-                            <p className="text-xs text-indigo-200 font-bold uppercase">Senior Designer @ Meta</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Decorative background gradients */}
-                <div className="absolute top-0 right-0 w-full h-full">
-                    <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-white/10 rounded-full blur-[100px]"></div>
-                    <div className="absolute -bottom-20 -right-20 w-[400px] h-[400px] bg-indigo-400 rounded-full blur-[120px]"></div>
-                </div>
+              Full name
+            </label>
+            <div className="relative">
+              <User
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+                aria-hidden="true"
+              />
+              <input
+                id="fullName"
+                type="text"
+                autoComplete="name"
+                placeholder="John Doe"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className={`${inputClass} pl-11`}
+              />
             </div>
+          </div>
 
-            {/* Form Content */}
-            <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 lg:p-20 relative animate-slide-in-left">
-                <div className="w-full max-w-md">
-
-                    <div className="mb-10 mt-10">
-                        <h2 className="text-3xl font-black text-slate-900 mb-2">Create Account</h2>
-                        <p className="text-slate-500 font-medium">Join our community of world-class talent</p>
-                    </div>
-
-                    <form className="space-y-6" onSubmit={handleEmailSignUp}>
-                        {/* Role Selection */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <button
-                                type="button"
-                                onClick={() => setRole("candidate")}
-                                className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all ${role === "candidate"
-                                    ? "border-indigo-600 bg-indigo-50 text-indigo-600"
-                                    : "border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200"
-                                    }`}
-                            >
-                                <Briefcase className="w-5 h-5" />
-                                <span className="font-bold">Candidate</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setRole("recruiter")}
-                                className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all ${role === "recruiter"
-                                    ? "border-indigo-600 bg-indigo-50 text-indigo-600"
-                                    : "border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200"
-                                    }`}
-                            >
-                                <Building2 className="w-5 h-5" />
-                                <span className="font-bold">Recruiter</span>
-                            </button>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">Full Name</label>
-                            <div className="relative">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                <input
-                                    type="text"
-                                    placeholder="John Doe"
-                                    value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all placeholder:text-slate-400 font-medium"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">Email Address</label>
-                            <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                <input
-                                    type="email"
-                                    placeholder="name@company.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all placeholder:text-slate-400 font-medium"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">Password</label>
-                            <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-12 pr-12 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all placeholder:text-slate-400 font-medium"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                                >
-                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <input type="checkbox" className="w-5 h-5 rounded border-slate-200 text-indigo-600 focus:ring-indigo-500" />
-                            <p className="text-sm text-slate-500 font-medium">
-                                I agree to the <Link href="#" className="font-bold text-slate-900 underline underline-offset-4">Terms</Link> and <Link href="#" className="font-bold text-slate-900 underline underline-offset-4">Privacy Policy</Link>
-                            </p>
-                        </div>
-
-                        {error && (
-                            <p className="text-sm text-red-500 font-medium">{error}</p>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 transition-all active:scale-95 premium-shadow disabled:opacity-70 disabled:cursor-not-allowed"
-                        >
-                            {loading ? "Creating account..." : "Create Account"}
-                        </button>
-                    </form>
-
-                    <p className="mt-8 text-center text-slate-600 font-medium">
-                        Already have an account?{" "}
-                        <Link href="/signin" className="text-indigo-600 font-bold hover:underline underline-offset-4">
-                            Sign In
-                        </Link>
-                    </p>
-                </div>
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm font-semibold text-slate-700 mb-1.5"
+            >
+              Email
+            </label>
+            <div className="relative">
+              <Mail
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+                aria-hidden="true"
+              />
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="name@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={`${inputClass} pl-11`}
+              />
             </div>
-        </div>
-    );
+          </div>
+
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-semibold text-slate-700 mb-1.5"
+            >
+              Password
+            </label>
+            <div className="relative">
+              <Lock
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+                aria-hidden="true"
+              />
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={`${inputClass} pl-11 pr-11`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-600 transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" aria-hidden="true" />
+                ) : (
+                  <Eye className="w-4 h-4" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              required
+              className="w-4 h-4 mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <p className="text-xs text-slate-500 leading-relaxed">
+              I agree to the{" "}
+              <Link
+                href="/terms"
+                className="font-bold text-slate-900 underline underline-offset-4"
+              >
+                Terms
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="/privacy"
+                className="font-bold text-slate-900 underline underline-offset-4"
+              >
+                Privacy Policy
+              </Link>
+            </p>
+          </div>
+
+          {error && (
+            <p
+              role="alert"
+              className="animate-fade-in text-sm text-red-500 font-medium"
+            >
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full h-12 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:bg-indigo-700 hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                Creating account…
+              </>
+            ) : (
+              "Create account"
+            )}
+          </button>
+        </form>
+
+        <p className="animate-fade-up text-center text-sm text-slate-500 mt-5">
+          Already have an account?{" "}
+          <Link
+            href="/signin"
+            className="font-semibold text-indigo-600 hover:underline underline-offset-4"
+          >
+            Sign in
+          </Link>
+        </p>
+      </AuthShell>
+    </div>
+  );
 }

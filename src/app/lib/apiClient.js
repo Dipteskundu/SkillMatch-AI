@@ -75,7 +75,7 @@ api.interceptors.response.use(
     // /api/auth/me must be retried: it is what restores the session with an
     // expired access token on first load.
     const url = typeof config?.url === "string" ? config.url : "";
-    const noRefresh = /\/api\/auth\/(refresh|login|register|logout)$/.test(url);
+    const noRefresh = /\/api\/auth\/(refresh|login|register|logout|google)$/.test(url);
 
     if (response?.status === 401 && config && !config._retried && !noRefresh && typeof window !== "undefined") {
       config._retried = true;

@@ -164,7 +164,7 @@ function LessonContent() {
         <Navbar />
         <main className="flex-1">
           <PageWrapper>
-            <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-24 text-center">
+            <div className="animate-fade-up mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-24 text-center">
               <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-6">
                 <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" aria-hidden="true" />
               </div>
@@ -186,7 +186,7 @@ function LessonContent() {
         <Navbar />
         <main className="flex-1">
           <PageWrapper>
-            <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 pt-24 pb-24 text-center">
+            <div className="animate-fade-up mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 pt-24 pb-24 text-center">
               <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-6">
                 <AlertTriangle className="w-7 h-7 text-indigo-600" aria-hidden="true" />
               </div>
@@ -213,7 +213,7 @@ function LessonContent() {
         <Navbar />
         <main className="flex-1">
           <PageWrapper>
-            <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-24 text-center">
+            <div className="animate-fade-up mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-24 text-center">
               <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-6">
                 <AlertTriangle className="w-8 h-8 text-indigo-600" aria-hidden="true" />
               </div>
@@ -302,7 +302,7 @@ function LessonContent() {
           <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 pb-24">
             {/* Mobile course-tracker strip */}
             {inPlan && (
-              <details className="lg:hidden mb-6 bg-white border border-slate-100 rounded-3xl premium-shadow">
+              <details className="animate-card-rise lg:hidden mb-6 bg-white border border-slate-100 rounded-3xl premium-shadow" style={{ animationDelay: "100ms" }}>
                 <summary className="flex items-center gap-3 px-5 py-4 cursor-pointer select-none list-none hover:bg-indigo-50 active:scale-[0.99] transition-all [&::-webkit-details-marker]:hidden">
                   <span className="flex-1 text-sm font-black text-slate-900 text-left">Course content</span>
                   <span className="shrink-0 text-xs font-black text-indigo-600">
@@ -328,7 +328,7 @@ function LessonContent() {
               {/* Sticky course tracker — where you are, what's left */}
               {inPlan && (
                 <aside className="hidden lg:block self-start sticky top-24">
-                  <div className="bg-white border border-slate-100 rounded-3xl premium-shadow p-4">
+                  <div className="animate-card-rise bg-white border border-slate-100 rounded-3xl premium-shadow p-4" style={{ animationDelay: "120ms" }}>
                     <div className="flex items-center justify-between gap-3 px-2 pt-1 pb-3">
                       <h2 className="text-sm font-black text-slate-900">Course content</h2>
                       <span className="text-[11px] font-black text-indigo-600 whitespace-nowrap">
@@ -350,7 +350,7 @@ function LessonContent() {
                   {error && (
                     <p
                       role="alert"
-                      className="mb-6 rounded-2xl bg-indigo-50 border border-indigo-100 p-4 text-sm font-semibold text-indigo-600 flex items-center gap-2"
+                      className="animate-fade-in mb-6 rounded-2xl bg-indigo-50 border border-indigo-100 p-4 text-sm font-semibold text-indigo-600 flex items-center gap-2"
                     >
                       <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
                       {error}
@@ -358,18 +358,18 @@ function LessonContent() {
                   )}
 
                   {swapping ? (
-                    <InlineSkeleton rows={8} />
+                    <div className="animate-fade-in"><InlineSkeleton rows={8} /></div>
                   ) : (
-                    <>
+                    <div key={lessonId} className="animate-fade-up">
               {lesson.content?.introduction && (
-                <div className="mb-6">
+                <div className="animate-card-rise mb-6" style={{ animationDelay: "80ms" }}>
                   <h2 className="text-lg font-black text-slate-900 mb-3">Introduction</h2>
                   <p className="text-slate-600 leading-relaxed">{lesson.content.introduction}</p>
                 </div>
               )}
 
               {Array.isArray(lesson.objectives) && lesson.objectives.length > 0 && (
-                <div className="mb-6">
+                <div className="animate-card-rise mb-6" style={{ animationDelay: "160ms" }}>
                   <h2 className="text-lg font-black text-slate-900 mb-3">What you&apos;ll learn</h2>
                   <ul className="space-y-2">
                     {lesson.objectives.map((obj, i) => (
@@ -383,7 +383,7 @@ function LessonContent() {
               )}
 
               {lesson.content?.explanation && (
-                <div className="mb-6">
+                <div className="animate-card-rise mb-6" style={{ animationDelay: "240ms" }}>
                   <h2 className="text-lg font-black text-slate-900 mb-3">Lesson</h2>
                   <div
                     className="prose prose-slate max-w-none"
@@ -393,7 +393,7 @@ function LessonContent() {
               )}
 
               {lesson.content?.summary && (
-                <div className="mb-2">
+                <div className="animate-card-rise mb-2" style={{ animationDelay: "320ms" }}>
                   <h2 className="text-lg font-black text-slate-900 mb-3">Summary</h2>
                   <p className="text-slate-600 leading-relaxed">{lesson.content.summary}</p>
                 </div>
@@ -406,7 +406,7 @@ function LessonContent() {
                     This lesson has no content yet. Check back soon.
                   </p>
                 )}
-                    </>
+                    </div>
                   )}
 
               {/* Footer nav — resume engine */}

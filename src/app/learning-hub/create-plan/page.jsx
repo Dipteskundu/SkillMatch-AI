@@ -268,8 +268,8 @@ export default function CreatePlanPage() {
         <Navbar />
         <main className="flex-1">
           <PageWrapper>
-            <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-24 text-center">
-              <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-6">
+            <div className="animate-fade-up mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-24 text-center">
+              <div className="animate-badge-pop w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-6">
                 <CheckCircle2 className="w-8 h-8 text-indigo-600" aria-hidden="true" />
               </div>
               <h1 className="text-3xl font-black text-slate-900 mb-3">Plan saved.</h1>
@@ -332,15 +332,19 @@ export default function CreatePlanPage() {
                   canAdvance={canAdvance}
                 />
               ) : (
-                <div className="bg-white border border-slate-100 rounded-3xl p-7 sm:p-9 premium-shadow">
+                <div className="animate-card-rise bg-white border border-slate-100 rounded-3xl p-7 sm:p-9 premium-shadow">
                   <h2 className="text-2xl font-black text-slate-900 mb-1">Optional details</h2>
                   <p className="text-sm text-slate-500 mb-7">
                     Every field here is skippable. Anything you add sharpens the roadmap.
                   </p>
 
                   <div className="space-y-5">
-                    {OPTIONAL_FIELDS.map((field) => (
-                      <div key={field.key}>
+                    {OPTIONAL_FIELDS.map((field, i) => (
+                      <div
+                        key={field.key}
+                        className="animate-stagger-item"
+                        style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
+                      >
                         <label
                           htmlFor={field.key}
                           className="block text-sm font-bold text-slate-700 mb-2"
@@ -415,7 +419,7 @@ export default function CreatePlanPage() {
             <section className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6 pb-24">
               {/* Diagnostic gate (LH-007) */}
               {!diagnosticResult && (
-                <div className="rounded-3xl bg-slate-900 text-white p-6 sm:p-7 mb-6 relative overflow-hidden">
+                <div className="animate-card-rise rounded-3xl bg-slate-900 text-white p-6 sm:p-7 mb-6 relative overflow-hidden">
                   <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-indigo-600/40 blur-2xl" aria-hidden="true" />
                   <div className="relative">
                     <div className="flex items-start gap-3 mb-3">
@@ -481,7 +485,7 @@ export default function CreatePlanPage() {
               )}
 
               {diagnosticResult && (
-                <div className="rounded-3xl bg-indigo-50 border border-indigo-100 p-6 mb-6">
+                <div className="animate-scale-in rounded-3xl bg-indigo-50 border border-indigo-100 p-6 mb-6">
                   <div className="flex flex-wrap items-center gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-white border border-indigo-100 flex items-center justify-center">
                       <span className="text-xl font-black text-indigo-600">
@@ -580,6 +584,8 @@ function QuestionCard({ question, index, total, value, onChange, onNext, onBack,
         />
       </div>
 
+      {/* key remounts per question so step changes fade in; bar above persists and keeps its transition */}
+      <div key={question.key} className="animate-fade-up">
       <h2 className="text-2xl font-black text-slate-900 mb-2">{question.label}</h2>
       <p className="text-sm text-slate-500 mb-7">{question.hint}</p>
 
@@ -618,6 +624,7 @@ function QuestionCard({ question, index, total, value, onChange, onNext, onBack,
           className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
         />
       )}
+      </div>
 
       <div className="mt-8 flex flex-col sm:flex-row gap-3">
         <button
@@ -649,7 +656,7 @@ function GeneratingScreen() {
       <Navbar />
       <main className="flex-1">
         <PageWrapper>
-          <div className="mx-auto max-w-xl px-4 sm:px-6 lg:px-8 py-28 text-center">
+          <div className="animate-fade-up mx-auto max-w-xl px-4 sm:px-6 lg:px-8 py-28 text-center">
             <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-6">
               <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" aria-hidden="true" />
             </div>

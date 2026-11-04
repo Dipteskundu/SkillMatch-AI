@@ -128,10 +128,10 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "Home", href: "/", icon: Home },
-    { name: "Find Jobs", href: "/jobs", icon: Briefcase },
+    { name: "Jobs", href: "/jobs", icon: Briefcase },
     { name: "Companies", href: "/companies", icon: Building2 },
     { name: "Learning", href: "/learning-hub", icon: GraduationCap },
-    { name: "About Us", href: "/about", icon: Info },
+    { name: "About", href: "/about", icon: Info },
   ];
 
   const userMenuItems =
