@@ -4,13 +4,14 @@ const cleanEnv = (value) =>
   typeof value === "string" ? value.trim() : value;
 
 const rawBase = cleanEnv(process.env.NEXT_PUBLIC_API_BASE_URL) || "http://localhost:5000";
+const apiKey = cleanEnv(process.env.NEXT_PUBLIC_API_KEY);
 
 // Strip trailing slash
 export const API_BASE = rawBase.endsWith("/") ? rawBase.slice(0, -1) : rawBase;
 
 /**
- * In the browser we use a relative base URL so requests go through the
- * Next.js rewrite proxy → avoids CORS entirely.
+ * Browser requests use the same-origin Next.js rewrite proxy. Direct browser
+ * requests to the backend are also supported through its wildcard CORS policy.
  * On the server (SSR/RSC) we use the full backend URL directly.
  */
 const baseURL =
@@ -25,6 +26,7 @@ const api = axios.create({
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
+    ...(apiKey ? { "X-API-Key": apiKey } : {}),
   },
 });
 
@@ -53,7 +55,10 @@ async function refreshSession() {
   try {
     const res = await fetch("/api/auth/refresh", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(apiKey ? { "X-API-Key": apiKey } : {}),
+      },
       body: JSON.stringify({ refreshToken }),
     });
     if (!res.ok) return false;
@@ -98,6 +103,7 @@ export default api;
 export function apiFetch(input, init = {}) {
   const token = typeof window !== "undefined" ? localStorage.getItem("jwt_token") : null;
   const headers = { ...(init.headers || {}) };
+  if (apiKey) headers["X-API-Key"] = apiKey;
   if (token) headers.Authorization = `Bearer ${token}`;
   return fetch(input, { ...init, headers });
 }

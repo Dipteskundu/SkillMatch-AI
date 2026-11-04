@@ -133,7 +133,7 @@ Backend defaults to: `http://localhost:5000`
 Required env (see `SkillMatch-AI-Server/.env.example`):
 - `MONGODB_URI`
 - `MONGO_DB_NAME`
-- `CORS_ORIGIN`
+- `API_KEY` (must match frontend `NEXT_PUBLIC_API_KEY`)
 - (Optional) `GEMINI_API_KEY`
 - (Optional) Firebase Admin (for protected routes + realtime notifications):
   - `FIREBASE_SERVICE_ACCOUNT_JSON` (recommended) or `FIREBASE_PROJECT_ID`/`FIREBASE_CLIENT_EMAIL`/`FIREBASE_PRIVATE_KEY`
@@ -154,8 +154,11 @@ Frontend defaults to: `http://localhost:3000`
 
 Required env (see `SkillMatch-AI/.env.example`):
 - `NEXT_PUBLIC_API_BASE_URL` (or `NEXT_PUBLIC_API_LOCAL` for local API)
+- `NEXT_PUBLIC_API_KEY` (same value as backend `API_KEY`)
 - `NEXT_PUBLIC_FIREBASE_*`
 - (Optional) `NEXT_PUBLIC_IMGBB_API_KEY`
+
+`NEXT_PUBLIC_API_KEY` is included in browser requests and is visible to users. Protected API routes still require a user JWT and the appropriate role.
 
 ---
 
@@ -187,13 +190,12 @@ This repo is designed to deploy **frontend** and **backend** as **two separate V
 
 ### 1) Deploy the backend
 1. Create a new Vercel project with **Root Directory** = `SkillMatch-AI-Server`.
-2. Add env vars from `SkillMatch-AI-Server/.env.example`.
+2. Add env vars from `SkillMatch-AI-Server/.env.example`, including a strong `API_KEY`.
 3. Deploy — the backend is routed via `SkillMatch-AI-Server/vercel.json`.
 
 ### 2) Deploy the frontend
 1. Create a new Vercel project with **Root Directory** = `SkillMatch-AI`.
-2. Set `NEXT_PUBLIC_API_BASE_URL` to the deployed backend URL.
-3. Update backend `CORS_ORIGIN` to include your frontend domain.
+2. Set `NEXT_PUBLIC_API_BASE_URL` to the deployed backend URL and `NEXT_PUBLIC_API_KEY` to the same value as backend `API_KEY`.
 
 ---
 
