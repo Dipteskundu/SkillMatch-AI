@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../lib/AuthContext";
-import { API_BASE } from "../../lib/apiClient";
+import { API_BASE, apiFetch } from "../../lib/apiClient";
 import { CheckCircle2, User, ThumbsUp, ThumbsDown, Loader2 } from "lucide-react";
 import PipelineLayout from "../../components/PipelineLayout/PipelineLayout";
 
@@ -14,7 +14,7 @@ export default function InterviewCompletedPage() {
   const fetchCandidates = useCallback(async () => {
     if (!user?.uid) return;
     try {
-      const res = await fetch(`/api/applications/recruiter/${user.uid}`);
+      const res = await apiFetch(`/api/applications/recruiter/${user.uid}`);
       const data = await res.json();
       if (data.success) {
         setCandidates((data.applications || []).filter(a => a.status === "interview_completed"));
@@ -33,7 +33,7 @@ export default function InterviewCompletedPage() {
 
   const handleStatusChange = async (appId, newStatus) => {
     try {
-      const res = await fetch(`/api/applications/${appId}/status`, {
+      const res = await apiFetch(`/api/applications/${appId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),

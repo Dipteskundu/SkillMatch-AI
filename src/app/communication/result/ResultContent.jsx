@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../lib/AuthContext";
 import { CheckCircle2, MessageSquare, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { API_BASE } from "../../lib/apiClient";
+import { API_BASE, apiFetch } from "../../lib/apiClient";
 
 export default function ResultContent() {
     const searchParams = useSearchParams();
@@ -35,7 +35,7 @@ export default function ResultContent() {
         }
 
         const apiBase = API_BASE;
-        fetch(`/api/communication/result/${sessionId}`)
+        apiFetch(`/api/communication/result/${sessionId}`)
             .then((res) => res.json())
             .then((data) => {
                 if (data.success && data.data) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "../../lib/AuthContext";
-import { API_BASE } from "../../lib/apiClient";
+import { API_BASE, apiFetch } from "../../lib/apiClient";
 import Link from "next/link";
 import {
   Briefcase,
@@ -29,7 +29,7 @@ export default function MyJobsPage() {
 
     const fetchMyJobs = async () => {
       try {
-        const response = await fetch(`/api/jobs/my-jobs/${user.uid}`);
+        const response = await apiFetch(`/api/jobs/my-jobs/${user.uid}`);
         if (!response.ok) throw new Error("Failed to fetch jobs");
 
         const data = await response.json();
@@ -50,7 +50,7 @@ export default function MyJobsPage() {
     if (!confirm("Are you sure you want to request deletion for this job? An admin will need to approve this request.")) return;
 
     try {
-      const response = await fetch(`/api/jobs/${jobId}`, {
+      const response = await apiFetch(`/api/jobs/${jobId}`, {
         method: "DELETE",
       });
 

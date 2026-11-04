@@ -2,21 +2,12 @@ import api from "./apiClient";
 
 /**
  * Authenticated fetch using the centralized axios instance.
- * Attaches Firebase ID token as Authorization header.
+ * The JWT is attached automatically by apiClient's request interceptor.
  * Returns { data: { success: false, message, _serverError: true } } on 500
  * so callers never need to catch server config errors.
  */
 export async function authedFetch(user, url, init = {}) {
   const headers = { ...(init.headers || {}) };
-
-  if (user?.getIdToken) {
-    try {
-      const token = await user.getIdToken();
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-    } catch {
-      // token fetch failed — proceed without auth header
-    }
-  }
 
   const { headers: _h, body, method, ...rest } = init;
 

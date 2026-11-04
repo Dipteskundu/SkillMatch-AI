@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Briefcase, Bookmark, FileText, User, Settings,
   LogOut, Users, Clock, Building, Zap, Shield, ChevronLeft, ShieldCheck, AlertTriangle,
   ChevronRight, BarChart2, Search, X, Home, Star, CheckCircle2, UserCheck, AlignJustify,
-  CalendarDays, Plus,
+  CalendarDays, Plus, Target,
 } from "lucide-react";
 
 const NAV_BY_ROLE = {
@@ -21,6 +21,7 @@ const NAV_BY_ROLE = {
     { label: "Calendar",        href: "/calendar",                 icon: CalendarDays },
     { label: "My Tasks",        href: "/my-tasks",                 icon: CheckCircle2 },
     { label: "Saved Jobs",      href: "/saved-jobs",               icon: Bookmark },
+    { label: "My Assessments",  href: "/learning-hub/assessments",  icon: Target },
     { label: "Skill Test",      href: "/verification/skill-intro", icon: Zap },
     { label: "Skill Gap",       href: "/skill-gap-detection",      icon: BarChart2 },
     { label: "My Profile",      href: "/profile",                  icon: User },
@@ -44,8 +45,7 @@ const NAV_BY_ROLE = {
     { label: "Deletion Requests",   href: "/admin/deletion-requests",           icon: AlertTriangle },
     { label: "Approved Jobs",       href: "/admin/approved-jobs",               icon: Briefcase },
     { label: "Users",               href: "/admin/users",                       icon: Users },
-    { label: "Reports",             href: "/admin/reports",                     icon: BarChart2 },
-    { label: "Security",            href: "/admin/security",                    icon: Shield },
+    { label: "Learning Content",    href: "/dashboard/admin/learning/paths",    icon: BarChart2 },
   ],
 };
 

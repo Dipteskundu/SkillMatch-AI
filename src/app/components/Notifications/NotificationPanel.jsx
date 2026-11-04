@@ -14,8 +14,6 @@ import {
   XCircle,
   Calendar,
 } from "lucide-react";
-import { ref, onChildAdded } from "firebase/database";
-import { rtdb } from "../../lib/firebaseClient";
 import api from "../../lib/apiClient";
 import { safeError } from "../../lib/logger";
 
@@ -126,42 +124,8 @@ export default function NotificationPanel({
         if (mounted) setLoading(false);
       });
 
-    if (!rtdb) {
-      return () => {
-        mounted = false;
-      };
-    }
-
-    const notifRef = ref(rtdb, `notifications/${uid}`);
-    const unsubscribe = onChildAdded(notifRef, (snapshot) => {
-      if (!mounted) return;
-      const newNotif = snapshot.val();
-      if (!newNotif) return;
-
-      setNotifications((prev) => {
-        const isDuplicate = prev.some(
-          (n) =>
-            n.message === newNotif.message &&
-            Math.abs(
-              new Date(n.createdAt).getTime() -
-                new Date(newNotif.createdAt).getTime(),
-            ) < 10000,
-        );
-
-        if (isDuplicate) return prev;
-
-        // Safely update parent state without triggering synchronous cascading renders
-        if (!newNotif.read && setParentUnreadCount) {
-          setTimeout(() => setParentUnreadCount((c) => c + 1), 0);
-        }
-
-        return [newNotif, ...prev];
-      });
-    });
-
     return () => {
       mounted = false;
-      if (typeof unsubscribe === "function") unsubscribe();
     };
   }, [uid, setParentUnreadCount]);
 
