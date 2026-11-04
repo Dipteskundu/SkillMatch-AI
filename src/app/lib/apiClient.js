@@ -1,7 +1,5 @@
 import axios from "axios";
 
-import { auth } from "./firebaseClient";
-
 const cleanEnv = (value) =>
   typeof value === "string" ? value.trim() : value;
 
@@ -30,16 +28,13 @@ const api = axios.create({
   },
 });
 
+// Request interceptor: attach JWT token from localStorage
 api.interceptors.request.use(
-  async (config) => {
-    if (typeof window !== "undefined" && auth?.currentUser) {
-      try {
-        const token = await auth.currentUser.getIdToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-      } catch (err) {
-        console.warn("Failed to attach ID token to request", err);
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("jwt_token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
     }
     return config;
@@ -47,28 +42,62 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Single in-flight refresh so parallel 401s don't rotate the token twice.
+let refreshPromise = null;
+
+async function refreshSession() {
+  if (typeof window === "undefined") return false;
+  const refreshToken = localStorage.getItem("refresh_token");
+  if (!refreshToken) return false;
+
+  try {
+    const res = await fetch("/api/auth/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (!res.ok) return false;
+    const json = await res.json();
+    if (!json?.token || !json?.refreshToken) return false;
+    localStorage.setItem("jwt_token", json.token);
+    localStorage.setItem("refresh_token", json.refreshToken);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // If it's a 500 error, return a resolved object to prevent UI crashes,
-    // maintaining compatibility with how the app was originally built with authedFetch.
-    if (error.response && error.response.status === 500) {
-      return Promise.resolve({
-        status: 500,
-        data: {
-          success: false,
-          _serverError: true,
-          message: error.response.data?.message || "Server error. Please try again later.",
-          interviews: [],
-          data: null,
-          applications: [],
-          jobs: [],
-          notifications: [],
-        },
+  async (error) => {
+    const { response, config } = error;
+    // Only skip the endpoints that must never trigger a refresh loop.
+    // /api/auth/me must be retried: it is what restores the session with an
+    // expired access token on first load.
+    const url = typeof config?.url === "string" ? config.url : "";
+    const noRefresh = /\/api\/auth\/(refresh|login|register|logout)$/.test(url);
+
+    if (response?.status === 401 && config && !config._retried && !noRefresh && typeof window !== "undefined") {
+      config._retried = true;
+      refreshPromise = refreshPromise || refreshSession().finally(() => {
+        refreshPromise = null;
       });
+      if (await refreshPromise) return api(config);
     }
+
     return Promise.reject(error);
   }
 );
 
 export default api;
+
+/**
+ * Drop-in `fetch` for same-app /api/* calls: attaches the JWT that `api`
+ * would attach, so raw fetch calls don't have to know about auth.
+ */
+export function apiFetch(input, init = {}) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("jwt_token") : null;
+  const headers = { ...(init.headers || {}) };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return fetch(input, { ...init, headers });
+}

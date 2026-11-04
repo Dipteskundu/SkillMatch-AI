@@ -4,48 +4,23 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Rocket,
-  Mail,
   Lock,
   Eye,
   EyeOff,
-  Github,
-  Chrome,
   User,
   Shield,
   Briefcase,
   X,
   Loader2,
-  CheckCircle2,
-  AlertCircle,
   ArrowLeft,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { auth, googleProvider, firebaseClientStatus } from "../lib/firebaseClient";
-import {
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  sendPasswordResetEmail,
-} from "firebase/auth";
-import api, { API_BASE } from "../lib/apiClient";
-import { devLog, devWarn, safeError } from "../lib/logger";
+import { devWarn, safeError } from "../lib/logger";
+import { postLoginPath } from "../lib/redirect";
 import { useAuth } from "../lib/AuthContext";
 
-function normalizeAuthError(err) {
-  const code = String(err?.code || "").toLowerCase();
-  const message = String(err?.message || "");
-
-  if (
-    code === "auth/unauthorized-domain" ||
-    message.includes("Illegal url for new iframe")
-  ) {
-    return "Google Sign-In is not authorized for this domain yet. Add your Vercel domain under Firebase Authentication \u2192 Settings \u2192 Authorized domains.";
-  }
-
-  return message || "Authentication failed";
-}
-
 export default function SignInPage() {
-  const { refreshUser } = useAuth();
+  const { login } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -55,23 +30,11 @@ export default function SignInPage() {
   const [toast, setToast] = useState(null);
   const toastTimerRef = useRef(null);
   const [failedAttempts, setFailedAttempts] = useState(0);
-  const [lastFailedEmail, setLastFailedEmail] = useState("");
 
   // Forgot Password States
   const [showResetModal, setShowResetModal] = useState(false);
-  const [resetEmail, setResetEmail] = useState("");
-  const [resetLoading, setResetLoading] = useState(false);
-  const [resetSuccess, setResetSuccess] = useState("");
-  const [resetError, setResetError] = useState("");
 
   const router = useRouter();
-  const apiBase = API_BASE;
-  const firebaseDisabled = !auth;
-  const firebaseReason = !firebaseClientStatus.configured
-    ? "missing-config"
-    : firebaseClientStatus.authError || firebaseClientStatus.initError
-      ? "init-failed"
-      : "unknown";
 
   useEffect(() => {
     setMounted(true);
@@ -81,11 +44,8 @@ export default function SignInPage() {
     if (failedAttempts < 3) return;
     if (showResetModal) return;
     setShowResetModal(true);
-    setResetEmail(lastFailedEmail || email);
-    setResetError("");
-    setResetSuccess("");
     setFailedAttempts(0);
-  }, [failedAttempts, showResetModal, lastFailedEmail, email]);
+  }, [failedAttempts, showResetModal]);
 
   useEffect(() => {
     return () => {
@@ -101,139 +61,32 @@ export default function SignInPage() {
     toastTimerRef.current = setTimeout(() => setToast(null), 3500);
   }
 
-  function isWrongCredentialError(err) {
-    const code = String(err?.code || "").toLowerCase();
-    return (
-      code === "auth/invalid-credential" ||
-      code === "auth/wrong-password" ||
-      code === "auth/user-not-found"
-    );
-  }
-
   // Avoid hydration mismatches caused by browser extensions mutating inputs
   // before React hydrates (e.g., temp mail / password managers).
   if (!mounted) {
     return <div className="min-h-screen bg-white" />;
   }
 
-  async function syncUserWithBackend(user) {
-    try {
-      let existingRole = "candidate";
-      try {
-        const profileRes = await api.get(`/api/auth/profile/${user.uid}`);
-        if (profileRes.data.success && profileRes.data.data?.role) {
-          existingRole = profileRes.data.data.role;
-        }
-      } catch (err) {
-        devLog("Could not fetch existing profile, using default role");
-      }
-
-      await api.post("/api/auth/sync-user", {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        provider: user.providerData?.[0]?.providerId,
-        photoURL: user.photoURL,
-        role: existingRole,
-      });
-
-      // Refresh the local profile in AuthContext
-      await refreshUser();
-    } catch (err) {
-      safeError("Failed to sync user with backend", err);
-    }
-  }
-
   const handleEmailSignIn = async (event) => {
     event.preventDefault();
     setError("");
-    if (firebaseDisabled) {
-      showToast(
-        firebaseReason === "missing-config"
-          ? "Firebase Auth is not configured. Add NEXT_PUBLIC_FIREBASE_* env vars and restart."
-          : `Firebase Auth failed to initialize (${firebaseClientStatus.authError || firebaseClientStatus.initError}). Re-check NEXT_PUBLIC_FIREBASE_* values.`,
-      );
-      return;
-    }
     setLoading(true);
     try {
-      const cred = await signInWithEmailAndPassword(auth, email, password);
-      await syncUserWithBackend(cred.user);
-      sessionStorage.setItem("showWelcome", "1");
-      setFailedAttempts(0);
-      router.push("/");
-    } catch (err) {
-      if (isWrongCredentialError(err)) {
-        // Expected user-facing error; avoid noisy console errors.
+      const result = await login(email, password);
+      if (!result.success) {
         devWarn("Invalid sign-in credentials");
-        setLastFailedEmail(email);
         setFailedAttempts((c) => c + 1);
-        showToast("Incorrect email or password. Please try again.");
-      } else {
-        safeError("Email sign in error", err);
-        showToast(err?.message || "Failed to sign in");
+        setError(result.message);
+        showToast(result.message);
+        return;
       }
-      setError(err?.message || "Failed to sign in");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleForgotPassword = async (e) => {
-    e.preventDefault();
-    if (firebaseDisabled) {
-      setResetError(
-        firebaseReason === "missing-config"
-          ? "Firebase Auth is not configured. Set NEXT_PUBLIC_FIREBASE_* env vars and restart the dev server."
-          : `Firebase Auth failed to initialize (${firebaseClientStatus.authError || firebaseClientStatus.initError}). Check your NEXT_PUBLIC_FIREBASE_* values.`,
-      );
-      return;
-    }
-    if (!resetEmail) {
-      setResetError("Please enter your email address.");
-      return;
-    }
-    setResetLoading(true);
-    setResetError("");
-    setResetSuccess("");
-    try {
-      await sendPasswordResetEmail(auth, resetEmail);
-      setResetSuccess("Password reset link sent! Please check your inbox.");
-      setTimeout(() => {
-        setShowResetModal(false);
-        setResetSuccess("");
-        setResetEmail("");
-      }, 3000);
-    } catch (err) {
-      safeError("Password reset error", err);
-      setResetError(err.message || "Failed to send reset email.");
-    } finally {
-      setResetLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setError("");
-    if (firebaseDisabled) {
-      showToast(
-        firebaseReason === "missing-config"
-          ? "Firebase Auth is not configured. Add NEXT_PUBLIC_FIREBASE_* env vars and restart."
-          : `Firebase Auth failed to initialize (${firebaseClientStatus.authError || firebaseClientStatus.initError}). Re-check NEXT_PUBLIC_FIREBASE_* values.`,
-      );
-      return;
-    }
-    setLoading(true);
-    try {
-      const cred = await signInWithPopup(auth, googleProvider);
-      await syncUserWithBackend(cred.user);
       sessionStorage.setItem("showWelcome", "1");
       setFailedAttempts(0);
-      router.push("/");
+      router.push(postLoginPath());
     } catch (err) {
-      safeError("Google sign in error", err);
-      const msg = normalizeAuthError(err);
-      setError(msg);
-      showToast(msg);
+      safeError("Email sign in error", err);
+      setError("Failed to sign in");
+      showToast("Failed to sign in");
     } finally {
       setLoading(false);
     }
@@ -263,21 +116,6 @@ export default function SignInPage() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-          </div>
-        </div>
-      )}
-      {firebaseDisabled && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[300] max-w-xl w-[calc(100%-2rem)]">
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl px-4 py-3 text-sm font-semibold shadow-sm">
-            {firebaseReason === "missing-config" ? (
-              <>
-                Firebase Auth is not configured. Add `NEXT_PUBLIC_FIREBASE_API_KEY` (and the other `NEXT_PUBLIC_FIREBASE_*` vars) in `JobMatch-AI/.env.local` (or `JobMatch-AI/.env`) or in Vercel Project Settings → Environment Variables.
-              </>
-            ) : (
-              <>
-                Firebase Auth failed to initialize ({firebaseClientStatus.authError || firebaseClientStatus.initError}). Re-check your Firebase web config values in `JobMatch-AI/.env.local` (or `JobMatch-AI/.env`) and restart the dev server.
-              </>
-            )}
           </div>
         </div>
       )}
@@ -374,34 +212,6 @@ export default function SignInPage() {
             <p className="text-slate-500 text-sm">Sign in to your JobMatch AI account</p>
           </div>
 
-          {/* Social buttons */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="flex items-center justify-center gap-2.5 py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <Chrome className="w-4 h-4" />
-              Google
-            </button>
-            <button
-              type="button"
-              disabled
-              className="flex items-center justify-center gap-2.5 py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-400 cursor-not-allowed"
-            >
-              <Github className="w-4 h-4" />
-              GitHub
-            </button>
-          </div>
-
-          {/* OR divider */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-px bg-slate-200 flex-1" />
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">or</span>
-            <div className="h-px bg-slate-200 flex-1" />
-          </div>
-
           {/* Form */}
           <form onSubmit={handleEmailSignIn} className="space-y-5">
             {/* Email */}
@@ -424,10 +234,7 @@ export default function SignInPage() {
                 <label className="text-sm font-semibold text-slate-700">Password</label>
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowResetModal(true);
-                    setResetEmail(email);
-                  }}
+                  onClick={() => setShowResetModal(true)}
                   className="text-xs font-semibold hover:opacity-80 transition-opacity" style={{ color: "#6452F5" }}
                 >
                   Forgot password?
@@ -539,60 +346,21 @@ export default function SignInPage() {
               </div>
               <h3 className="text-xl font-black text-slate-900 mb-1">Reset Password</h3>
               <p className="text-slate-500 text-sm leading-relaxed">
-                Enter your email and we&apos;ll send you a link to reset your password.
+                Password reset links aren&apos;t available yet. Email{" "}
+                <a href="mailto:support@jobmatch.ai" className="font-semibold text-blue-600 hover:underline">
+                  support@jobmatch.ai
+                </a>{" "}
+                and we&apos;ll help you regain access.
               </p>
             </div>
 
-            <form onSubmit={handleForgotPassword} className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="name@company.com"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                />
-              </div>
-
-              {resetError && (
-                <div className="flex items-center gap-2.5 p-3.5 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm font-medium">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  {resetError}
-                </div>
-              )}
-
-              {resetSuccess && (
-                <div className="flex items-center gap-2.5 p-3.5 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-xl text-sm font-medium">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  {resetSuccess}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={resetLoading}
-                className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-              >
-                {resetLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  "Send Reset Link"
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowResetModal(false)}
-                className="w-full py-3 text-slate-500 font-semibold text-sm hover:text-slate-900 transition-colors"
-              >
-                Cancel
-              </button>
-            </form>
+            <button
+              type="button"
+              onClick={() => setShowResetModal(false)}
+              className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
