@@ -3,8 +3,12 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-const API_BACKEND = (API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+const DEFAULT_API_BACKEND =
+  process.env.NODE_ENV === "production"
+    ? "https://skillmatch-ai-server.onrender.com"
+    : "http://localhost:5001";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+const API_BACKEND = (API_BASE_URL || DEFAULT_API_BACKEND).replace(/\/$/, "");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {

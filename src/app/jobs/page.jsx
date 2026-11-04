@@ -181,7 +181,10 @@ export default function JobsPage() {
     async function fetchJobs() {
       try {
         const res = await api.get("/api/jobs");
-        setJobs(res.data.data || []);
+        if (!Array.isArray(res.data?.data)) {
+          throw new Error("Unexpected response from the jobs API");
+        }
+        setJobs(res.data.data);
         // If user is authenticated, also fetch their applications to hide applied jobs
         if (isAuthenticated && user?.uid) {
           try {
