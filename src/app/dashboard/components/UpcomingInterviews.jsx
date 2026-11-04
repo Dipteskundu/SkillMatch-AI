@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import api, { API_BASE } from "../../lib/apiClient";
 import { useAuth } from "../../lib/AuthContext";
-import { devLog, safeError } from "../../lib/logger";
+import { safeError } from "../../lib/logger";
 
 export default function UpcomingInterviews({ uid }) {
   const { user, isAuthenticated } = useAuth();
@@ -22,14 +22,11 @@ export default function UpcomingInterviews({ uid }) {
   const [selectedInterview, setSelectedInterview] = useState(null);
   const router = useRouter();
 
-  devLog("UpcomingInterviews component mounted with UID:", uid);
 
   const fetchUpcomingInterviews = useCallback(async () => {
     try {
-      devLog("Fetching interviews for candidate UID:", uid);
 
       if (!isAuthenticated || !user?.uid) {
-        devLog("No UID provided, skipping fetch");
         setLoading(false);
         return;
       }
@@ -42,7 +39,6 @@ export default function UpcomingInterviews({ uid }) {
       const res = await api.get("/api/interviews/candidate");
       const data = res.data;
 
-      devLog("Candidate interviews API response:", data);
 
       if (data.success) {
         // Handle both response structures
@@ -58,10 +54,8 @@ export default function UpcomingInterviews({ uid }) {
               new Date(a.scheduledDateTime) - new Date(b.scheduledDateTime),
           );
 
-        devLog("Upcoming interviews after filtering:", upcomingInterviews);
         setInterviews(upcomingInterviews);
       } else {
-        devLog("API response was not successful:", data);
       }
     } catch (error) {
       safeError("Failed to fetch upcoming interviews", error);

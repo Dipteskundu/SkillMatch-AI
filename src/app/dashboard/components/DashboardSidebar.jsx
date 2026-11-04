@@ -37,6 +37,7 @@ const NAV_BY_ROLE = {
     { label: "Calendar",         href: "/calendar",             icon: CalendarDays },
     { label: "Final Selected",   href: "/final-selected",       icon: UserCheck },
     { label: "My Jobs",          href: "/my-jobs",              icon: Briefcase },
+    { label: "My Assessments",   href: "/learning-hub/assessments", icon: Target },
     { label: "My Profile",       href: "/profile",              icon: User },
   ],
   admin: [

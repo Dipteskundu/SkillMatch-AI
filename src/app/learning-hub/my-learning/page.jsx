@@ -141,7 +141,7 @@ function MyLearningContent() {
             {notice && (
               <div
                 role="status"
-                className="rounded-2xl bg-indigo-50 border border-indigo-100 p-4 mb-6 flex items-start gap-3"
+                className="animate-slide-in rounded-2xl bg-indigo-50 border border-indigo-100 p-4 mb-6 flex items-start gap-3"
               >
                 <CheckCircle2 className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" aria-hidden="true" />
                 <p className="text-sm font-semibold text-slate-700">{notice}</p>
@@ -159,7 +159,7 @@ function MyLearningContent() {
             {error && (
               <p
                 role="alert"
-                className="rounded-2xl bg-indigo-50 border border-indigo-100 p-4 mb-6 text-sm font-semibold text-indigo-600 flex items-center gap-2"
+                className="animate-fade-in rounded-2xl bg-indigo-50 border border-indigo-100 p-4 mb-6 text-sm font-semibold text-indigo-600 flex items-center gap-2"
               >
                 <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
                 {error}
@@ -174,10 +174,11 @@ function MyLearningContent() {
               <EmptyState />
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {plans.map((plan) => (
+                {plans.map((plan, i) => (
                   <PlanCard
                     key={plan._id}
                     plan={plan}
+                    index={i}
                     editing={editingId === plan._id}
                     editTitle={editTitle}
                     saving={savingId === plan._id}
@@ -200,6 +201,7 @@ function MyLearningContent() {
 
 function PlanCard({
   plan,
+  index = 0,
   editing,
   editTitle,
   saving,
@@ -226,7 +228,10 @@ function PlanCard({
       : "/learning-hub/paths";
 
   return (
-    <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-7 premium-shadow card-hover flex flex-col">
+    <div
+      className="animate-card-rise bg-white border border-slate-100 rounded-3xl p-6 sm:p-7 premium-shadow card-hover flex flex-col"
+      style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
+    >
       <div className="flex items-start justify-between gap-4 mb-4">
         {editing ? (
           <div className="flex-1">
@@ -386,10 +391,11 @@ function AchievementsStrip({ plans }) {
   return (
     <section aria-label="Your achievements" className="mb-8">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {tiles.map(({ icon: Icon, label, value }) => (
+        {tiles.map(({ icon: Icon, label, value }, i) => (
           <div
             key={label}
-            className="rounded-2xl bg-white border border-slate-100 p-4 sm:p-5 premium-shadow"
+            className="animate-card-rise rounded-2xl bg-white border border-slate-100 p-4 sm:p-5 premium-shadow"
+            style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
           >
             <Icon className="w-4 h-4 text-indigo-600 mb-3" aria-hidden="true" />
             <p className="text-2xl font-black text-slate-900 leading-none mb-1.5">{value}</p>
@@ -405,7 +411,7 @@ function AchievementsStrip({ plans }) {
 
 function EmptyState() {
   return (
-    <div className="mx-auto max-w-2xl text-center bg-white border border-slate-100 rounded-3xl p-10 sm:p-14 premium-shadow">
+    <div className="animate-fade-up mx-auto max-w-2xl text-center bg-white border border-slate-100 rounded-3xl p-10 sm:p-14 premium-shadow">
       <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-6">
         <Target className="w-8 h-8 text-indigo-600" aria-hidden="true" />
       </div>

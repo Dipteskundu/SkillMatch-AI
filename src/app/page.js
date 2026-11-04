@@ -59,11 +59,12 @@ function useCountUp(target, duration = 1800, startOnView = true) {
 
 /* ─── Static data ──────────────────────────────────────────────────────── */
 const PARTNERS = [
-  "Stripe", "Figma", "Notion", "Linear", "Vercel",
-  "Loom", "Retool", "Segment", "Atlassian", "GitLab",
-  // duplicate for seamless loop
-  "Stripe", "Figma", "Notion", "Linear", "Vercel",
-  "Loom", "Retool", "Segment", "Atlassian", "GitLab",
+  "Acme Corp",
+  "Tech Innovations",
+  "Data Solutions",
+  "Cloud Labs",
+  "Auto Systems",
+  // placeholder partners
 ];
 
 const HOW_STEPS = [
@@ -136,38 +137,38 @@ const FEATURES = [
 ];
 
 const STATS = [
-  { label: "Developers", value: 5000, suffix: "k+", display: "5k+" },
-  { label: "Tech Companies", value: 200, suffix: "+", display: "200+" },
-  { label: "Match Accuracy", value: 98, suffix: "%", display: "98%" },
-  { label: "Hours Saved", value: 12, suffix: "m", display: "12m" },
+  { label: "Developers", value: 150, suffix: "+", display: "150+" },
+  { label: "Tech Companies", value: 25, suffix: "+", display: "25+" },
+  { label: "Match Accuracy", value: 85, suffix: "%", display: "85%" },
+  { label: "Hours Saved", value: 8, suffix: "m", display: "8m" },
 ];
 
 const TESTIMONIALS = [
   {
-    name: "Sarah Chen",
-    role: "Head of Engineering",
-    company: "Stripe",
-    avatar: "SC",
-    avatarBg: "bg-blue-100 text-blue-700",
-    text: "JobMatch cut our hiring time from 6 weeks to 12 days. The quality of candidates we see now is incomparable to traditional résumé screening.",
+    name: "Jamie Williams",
+    role: "Engineering Manager",
+    company: "Midwest Tech",
+    avatar: "JW",
+    avatarBg: "bg-indigo-100 text-indigo-600",
+    text: "JobMatch's skill verification helped us identify candidates with actual practical experience, reducing our screening time by 40%.",
+    stars: 4,
+  },
+  {
+    name: "Rohit Patel",
+    role: "HR Director",
+    company: "Global Enterprises",
+    avatar: "RP",
+    avatarBg: "bg-emerald-100 text-emerald-600",
+    text: "The skill gap detection is spot-on. Our recruiters now have clear, actionable feedback for every applicant.",
     stars: 5,
   },
   {
-    name: "Marcus Vidal",
-    role: "CTO",
-    company: "LinearHQ",
-    avatar: "MV",
-    avatarBg: "bg-violet-100 text-violet-700",
-    text: "The cognitive analysis reports are uncanny. We discovered a senior engineer hidden in what looked like a junior application — something no recruiter would have caught.",
-    stars: 5,
-  },
-  {
-    name: "Priya Nair",
-    role: "Talent Acquisition Lead",
-    company: "Notion",
-    avatar: "PN",
-    avatarBg: "bg-emerald-100 text-emerald-700",
-    text: "Bias-free assessment is not just a checkbox for us — it's a culture value. JobMatch is the only platform that actually delivers on that promise end-to-end.",
+    name: "Elena Torres",
+    role: "Founder",
+    company: "StartUp Labs",
+    avatar: "ET",
+    avatarBg: "bg-violet-100 text-violet-600",
+    text: "As a bootstrapped founder, the free tier is perfect. We've hired 3 great developers through the platform already.",
     stars: 5,
   },
 ];

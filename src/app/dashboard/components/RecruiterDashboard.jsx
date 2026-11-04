@@ -20,7 +20,7 @@ import Skeleton from "../../components/common/Skeleton";
 import { useScrollReveal } from "../../lib/useScrollReveal";
 import { RecruiterPipelineChart, RecruiterJobsChart } from "./DashboardCharts";
 import api, { API_BASE } from "../../lib/apiClient";
-import { devLog, safeError } from "../../lib/logger";
+import { safeError } from "../../lib/logger";
 
 function StatCard({ label, value, icon: Icon, color, bg }) {
   return (
@@ -58,8 +58,6 @@ export default function RecruiterDashboard({ user, data, loading }) {
   const revealRef = useScrollReveal();
 
   // Debug: Check if user data is available
-  devLog("RecruiterDashboard mounted with user:", user);
-  devLog("User UID available:", !!user?.uid);
 
   if (loading) {
     return (
@@ -129,8 +127,6 @@ export default function RecruiterDashboard({ user, data, loading }) {
     setPosting(true);
 
     // Debug logging
-    devLog("User data:", user);
-    devLog("User UID:", user?.uid);
 
     // Check if user UID exists
     if (!user?.uid) {
@@ -158,11 +154,9 @@ export default function RecruiterDashboard({ user, data, loading }) {
         postedBy: user?.uid,
       };
 
-      devLog("Sending job data:", jobData);
 
       const res = await api.post("/api/jobs", jobData);
       const result = res.data;
-      devLog("Job creation result:", result);
 
       if (result.success) {
         setPostMsg({ type: "success", text: "Job posted successfully." });

@@ -88,7 +88,7 @@ export default function LearningPathsPage() {
 
           {/* ── Filters ── */}
           <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-8">
-            <div className="bg-white border border-slate-100 rounded-3xl p-4 sm:p-5 premium-shadow flex flex-col lg:flex-row gap-4 lg:items-center">
+            <div className="animate-card-rise bg-white border border-slate-100 rounded-3xl p-4 sm:p-5 premium-shadow flex flex-col lg:flex-row gap-4 lg:items-center" style={{ animationDelay: "80ms" }}>
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 w-[18px] h-[18px] text-slate-400" aria-hidden="true" />
                 <input
@@ -123,10 +123,11 @@ export default function LearningPathsPage() {
             {/* Category chips (informational counts) */}
             {categoryCounts.length > 1 && (
               <div className="mt-4 flex flex-wrap gap-2">
-                {categoryCounts.map(([cat, count]) => (
+                {categoryCounts.map(([cat, count], i) => (
                   <span
                     key={cat}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-[11px] font-bold text-slate-500"
+                    className="animate-stagger-item inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-[11px] font-bold text-slate-500"
+                    style={{ animationDelay: `${Math.min(i, 10) * 50}ms` }}
                   >
                     {cat}
                     <span className="text-indigo-600">{count}</span>
@@ -141,7 +142,7 @@ export default function LearningPathsPage() {
             {loading && <PathCardSkeleton count={6} />}
 
             {error && (
-              <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center premium-shadow">
+              <div className="animate-fade-up bg-white border border-slate-100 rounded-3xl p-12 text-center premium-shadow">
                 <p className="text-slate-500 mb-5">{error}</p>
                 <button
                   type="button"
@@ -154,7 +155,7 @@ export default function LearningPathsPage() {
             )}
 
             {!loading && !error && filtered.length === 0 && (
-              <div className="bg-white border border-slate-100 rounded-3xl p-12 text-center premium-shadow">
+              <div className="animate-fade-up bg-white border border-slate-100 rounded-3xl p-12 text-center premium-shadow">
                 <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center mx-auto mb-5">
                   <SearchX className="w-7 h-7 text-slate-400" aria-hidden="true" />
                 </div>
@@ -177,7 +178,7 @@ export default function LearningPathsPage() {
 
             {!loading && !error && filtered.length > 0 && (
               <>
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-5">
+                <p className="animate-fade-up text-xs font-bold uppercase tracking-widest text-slate-400 mb-5">
                   {filtered.length} {filtered.length === 1 ? "path" : "paths"}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -153,7 +153,7 @@ export default function PathDetailPage() {
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-1">
-          <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 pt-24 pb-24 text-center">
+          <div className="animate-fade-up mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 pt-24 pb-24 text-center">
             <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mx-auto mb-6">
               <AlertTriangle className="w-7 h-7 text-indigo-600" aria-hidden="true" />
             </div>
@@ -196,13 +196,13 @@ export default function PathDetailPage() {
             <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 pb-12">
               <Link
                 href="/learning-hub/paths"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors mb-6"
+                className="animate-fade-up inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors mb-6"
               >
                 <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
                 All learning paths
               </Link>
 
-              <div className="flex flex-wrap items-center gap-3 mb-5">
+              <div className="animate-card-rise flex flex-wrap items-center gap-3 mb-5" style={{ animationDelay: "60ms" }}>
                 <span className={`px-3 py-1 rounded-full border text-[11px] font-bold uppercase tracking-wider ${levelClass}`}>
                   {path.level}
                 </span>
@@ -211,15 +211,15 @@ export default function PathDetailPage() {
                 </span>
               </div>
 
-              <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight mb-5 max-w-3xl leading-[1.08]">
+              <h1 className="animate-card-rise text-3xl sm:text-5xl font-black text-slate-900 tracking-tight mb-5 max-w-3xl leading-[1.08]" style={{ animationDelay: "120ms" }}>
                 {path.title}
               </h1>
 
-              <p className="text-base sm:text-lg text-slate-500 leading-relaxed max-w-3xl">
+              <p className="animate-card-rise text-base sm:text-lg text-slate-500 leading-relaxed max-w-3xl" style={{ animationDelay: "180ms" }}>
                 {path.description}
               </p>
 
-              <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-3 text-sm font-semibold text-slate-600">
+              <div className="animate-card-rise mt-8 flex flex-wrap items-center gap-x-7 gap-y-3 text-sm font-semibold text-slate-600" style={{ animationDelay: "240ms" }}>
                 <span className="inline-flex items-center gap-2">
                   <Layers className="w-4 h-4 text-indigo-600" aria-hidden="true" />
                   {path.moduleCount ?? path.modules.length} modules
@@ -239,7 +239,7 @@ export default function PathDetailPage() {
               </div>
 
               {/* CTA row */}
-              <div className="mt-9 flex flex-col sm:flex-row gap-3">
+              <div className="animate-card-rise mt-9 flex flex-col sm:flex-row gap-3" style={{ animationDelay: "300ms" }}>
                 <button
                   type="button"
                   onClick={handleStart}
@@ -271,13 +271,13 @@ export default function PathDetailPage() {
               {enrollError && (
                 <p
                   role="alert"
-                  className="mt-3 text-xs font-semibold text-indigo-600 inline-flex items-center gap-1.5"
+                  className="animate-fade-in mt-3 text-xs font-semibold text-indigo-600 inline-flex items-center gap-1.5"
                 >
                   <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
                   {enrollError}
                 </p>
               )}
-              <p className="mt-3 text-xs text-slate-400 inline-flex items-center gap-1.5">
+              <p className="animate-card-rise mt-3 text-xs text-slate-400 inline-flex items-center gap-1.5" style={{ animationDelay: "360ms" }}>
                 <Lock className="w-3 h-3" aria-hidden="true" />
                 Enrolling and full lessons require a free account.
               </p>
@@ -287,16 +287,17 @@ export default function PathDetailPage() {
           {/* ── Objectives + Prerequisites ── */}
           <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-10">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 premium-shadow">
+              <div className="animate-card-rise lg:col-span-2 bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 premium-shadow" style={{ animationDelay: "60ms" }}>
                 <h2 className="flex items-center gap-2 font-bold text-slate-900 mb-5 text-lg">
                   <Target className="w-5 h-5 text-indigo-600" aria-hidden="true" />
                   What you&apos;ll achieve
                 </h2>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {(path.objectives || []).map((obj) => (
+                  {(path.objectives || []).map((obj, i) => (
                     <li
                       key={obj}
-                      className="flex items-start gap-3 text-sm text-slate-600 leading-relaxed"
+                      className="animate-stagger-item flex items-start gap-3 text-sm text-slate-600 leading-relaxed"
+                      style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
                     >
                       <CheckCircle2 className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" aria-hidden="true" />
                       {obj}
@@ -305,7 +306,7 @@ export default function PathDetailPage() {
                 </ul>
               </div>
 
-              <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 premium-shadow">
+              <div className="animate-card-rise bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 premium-shadow" style={{ animationDelay: "140ms" }}>
                 <h2 className="flex items-center gap-2 font-bold text-slate-900 mb-5 text-lg">
                   <ListChecks className="w-5 h-5 text-indigo-600" aria-hidden="true" />
                   Prerequisites
@@ -333,7 +334,7 @@ export default function PathDetailPage() {
 
           {/* ── Curriculum ── */}
           <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20 sm:pb-28">
-            <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+            <div className="reveal flex flex-wrap items-end justify-between gap-4 mb-8">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                   Curriculum
@@ -354,7 +355,7 @@ export default function PathDetailPage() {
                 <details
                   key={mod._id || mod.slug}
                   open={mi === 0}
-                  className="group bg-white border border-slate-100 rounded-3xl overflow-hidden premium-shadow"
+                  className="group reveal bg-white border border-slate-100 rounded-3xl overflow-hidden premium-shadow"
                 >
                   <summary className="flex items-center gap-4 p-5 sm:p-6 cursor-pointer list-none select-none hover:bg-slate-50/60 transition-colors">
                     <span className="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-sm font-black text-indigo-600 shrink-0">
@@ -431,7 +432,7 @@ export default function PathDetailPage() {
             </div>
 
             {/* Bottom CTA */}
-            <div className="mt-10 rounded-3xl bg-slate-900 p-7 sm:p-10 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative overflow-hidden">
+            <div className="reveal mt-10 rounded-3xl bg-slate-900 p-7 sm:p-10 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative overflow-hidden">
               <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-indigo-600/30 blur-3xl" aria-hidden="true" />
               <div className="relative">
                 <h3 className="text-xl font-bold mb-1.5">Ready to start {path.title}?</h3>

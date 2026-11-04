@@ -55,6 +55,28 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Google sign-in: the frontend gets a Firebase ID token via the Google
+  // account popup (see lib/firebase.js) and the backend verifies it, links or
+  // creates the user (new Google users always get the "candidate" role), and
+  // issues the same JWT session as email login.
+  const loginWithGoogle = async (idToken) => {
+    try {
+      const res = await api.post("/api/auth/google", { idToken, role: "candidate" });
+      if (!res.data?.success || !res.data.token) {
+        return { success: false, message: res.data?.message || "Google login failed" };
+      }
+      localStorage.setItem(TOKEN_KEY, res.data.token);
+      if (res.data.refreshToken) localStorage.setItem(REFRESH_KEY, res.data.refreshToken);
+      setUser(res.data.user);
+      return { success: true, user: res.data.user };
+    } catch (err) {
+      return {
+        success: false,
+        message: err?.response?.data?.message || "Cannot reach the server. Please try again.",
+      };
+    }
+  };
+
   const register = async (email, password, role = "candidate", displayName = "") => {
     try {
       const res = await api.post("/api/auth/register", { email, password, role, displayName });
@@ -93,6 +115,7 @@ export function AuthProvider({ children }) {
     // Kept for pages that wait on auth before fetching.
     firebaseReady: true,
     login,
+    loginWithGoogle,
     logout,
     register,
     refreshUser,
