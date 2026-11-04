@@ -6,7 +6,7 @@
 
 <p>
   <img alt="Status" src="https://img.shields.io/badge/Status-In%20Development-6E56CF?style=for-the-badge" />
-  <img alt="Node" src="https://img.shields.io/badge/Node-20.x-339933?style=for-the-badge&logo=node.js&logoColor=white" />
+  <img alt="Node" src="https://img.shields.io/badge/Node-26.x-339933?style=for-the-badge&logo=node.js&logoColor=white" />
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" />
   <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=0B1B2B" />
   <img alt="Express" src="https://img.shields.io/badge/Express.js-API-000000?style=for-the-badge&logo=express&logoColor=white" />
@@ -103,7 +103,7 @@ It helps solve common hiring pain points:
 
 ### ✅ Prerequisites
 
-- Node.js **20.x**
+- Node.js **26.x**
 - MongoDB Atlas connection string (or your MongoDB URI)
 - Firebase project (Auth + Realtime Database)
 - (Optional) Gemini API key for AI routes
