@@ -20,7 +20,7 @@ export const uploadToImgBB = async (file) => {
 
     const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
     if (!apiKey) {
-        console.error("ImgBB API Key is missing in environment variables.");
+        // output removed
         return { url: null, error: "System configuration error." };
     }
 
@@ -38,11 +38,11 @@ export const uploadToImgBB = async (file) => {
         if (result.success) {
             return { url: result.data.url, error: null };
         } else {
-            console.error("ImgBB Upload Error:", result.error || "Unknown error");
+            // output removed
             return { url: null, error: result.error?.message || "Failed to upload image to ImgBB." };
         }
     } catch (error) {
-        console.error("ImgBB Fetch Error:", error);
+        // output removed
         return { url: null, error: "Network error occurred while uploading. Please try again." };
     }
 };
