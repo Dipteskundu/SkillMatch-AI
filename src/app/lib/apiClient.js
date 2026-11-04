@@ -3,8 +3,11 @@ import axios from "axios";
 const cleanEnv = (value) =>
   typeof value === "string" ? value.trim() : value;
 
-const rawBase = cleanEnv(process.env.NEXT_PUBLIC_API_BASE_URL) || "http://localhost:5000";
-const apiKey = cleanEnv(process.env.NEXT_PUBLIC_API_KEY);
+const DEFAULT_API_BASE =
+  process.env.NODE_ENV === "production"
+    ? "https://skillmatch-ai-server.onrender.com"
+    : "http://localhost:5001";
+const rawBase = cleanEnv(process.env.NEXT_PUBLIC_API_BASE_URL) || DEFAULT_API_BASE;
 
 // Strip trailing slash
 export const API_BASE = rawBase.endsWith("/") ? rawBase.slice(0, -1) : rawBase;
@@ -16,9 +19,7 @@ export const API_BASE = rawBase.endsWith("/") ? rawBase.slice(0, -1) : rawBase;
  */
 const baseURL =
   typeof window === "undefined"
-    ? (typeof process !== "undefined" && process.env.VERCEL && !process.env.NEXT_PUBLIC_API_BASE_URL
-        ? "http://SERVER_CONFIG_REQUIRED" // Fail fast with a clear error if misconfigured on Vercel
-        : API_BASE)
+    ? API_BASE
     : "";               // client-side: relative → Next.js proxy handles it
 
 const api = axios.create({
@@ -26,7 +27,6 @@ const api = axios.create({
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
-    ...(apiKey ? { "X-API-Key": apiKey } : {}),
   },
 });
 
@@ -57,7 +57,6 @@ async function refreshSession() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(apiKey ? { "X-API-Key": apiKey } : {}),
       },
       body: JSON.stringify({ refreshToken }),
     });
@@ -103,7 +102,6 @@ export default api;
 export function apiFetch(input, init = {}) {
   const token = typeof window !== "undefined" ? localStorage.getItem("jwt_token") : null;
   const headers = { ...(init.headers || {}) };
-  if (apiKey) headers["X-API-Key"] = apiKey;
   if (token) headers.Authorization = `Bearer ${token}`;
   return fetch(input, { ...init, headers });
 }
