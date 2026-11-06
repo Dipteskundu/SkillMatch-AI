@@ -217,7 +217,7 @@ export default function DashboardSidebar({
 
       {/* Mobile drawer */}
       <div
-        className={`lg:hidden fixed top-0 left-0 z-50 h-full w-72 bg-white flex flex-col shadow-2xl transition-transform duration-300 ${
+        className={`glass-nav-surface backdrop-blur-xl backdrop-saturate-150 lg:hidden fixed top-0 left-0 z-50 h-full w-72 flex flex-col transition-transform duration-300 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -226,7 +226,7 @@ export default function DashboardSidebar({
 
       {/* Desktop sidebar */}
       <aside
-        className={`hidden lg:flex flex-col h-screen bg-white border-r border-slate-200 transition-all duration-300 ease-in-out shrink-0 animate-drawer-in-left ${
+        className={`glass-nav-surface backdrop-blur-xl backdrop-saturate-150 hidden lg:flex flex-col h-screen border-r border-slate-200 transition-all duration-300 ease-in-out shrink-0 animate-drawer-in-left ${
           collapsed ? "w-[72px]" : "w-64"
         }`}
         aria-label="Dashboard sidebar"

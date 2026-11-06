@@ -57,15 +57,6 @@ function useCountUp(target, duration = 1800, startOnView = true) {
 }
 
 /* ─── Static data ──────────────────────────────────────────────────────── */
-const PARTNERS = [
-  "Acme Corp",
-  "Tech Innovations",
-  "Data Solutions",
-  "Cloud Labs",
-  "Auto Systems",
-  // placeholder partners
-];
-
 const HOW_STEPS = [
   {
     num: "01",
@@ -262,34 +253,9 @@ export default function Home() {
         <HomeHero stats={STATS} />
 
         {/* ══════════════════════════════════════════════════════════════
-            2. TRUSTED BY – MARQUEE STRIP
-        ══════════════════════════════════════════════════════════════ */}
-        <section className="home-trusted-section border-y border-slate-100 pt-8 pb-8">
-          <div className="max-w-6xl mx-auto px-6 text-center mb-7">
-            <p className="text-xs font-bold tracking-[0.25em] uppercase text-slate-400">Trusted by teams at</p>
-          </div>
-          <div className="relative overflow-hidden">
-            {/* Edge fades — hide the entry/exit points of the marquee */}
-            <div className="home-marquee-fade-left pointer-events-none absolute inset-y-0 left-0 z-10 w-24" aria-hidden="true" />
-            <div className="home-marquee-fade-right pointer-events-none absolute inset-y-0 right-0 z-10 w-24" aria-hidden="true" />
-            <div className="flex animate-marquee gap-14 w-max">
-              {[...PARTNERS, ...PARTNERS, ...PARTNERS, ...PARTNERS].map((name, i) => (
-                <span
-                  key={i}
-                  aria-hidden={i >= PARTNERS.length}
-                  className="text-slate-400 font-black text-sm tracking-wide whitespace-nowrap hover:text-indigo-500 transition-colors cursor-default"
-                >
-                  {name}
-                </span>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ══════════════════════════════════════════════════════════════
             3. HOW IT WORKS
         ══════════════════════════════════════════════════════════════ */}
-        <section id="how-it-works" className="py-20 sm:py-28 bg-white">
+        <section id="how-it-works" className="py-5 sm:py-25 bg-white">
           <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-16">
               <p className="text-[10px] font-black tracking-[0.3em] text-indigo-500 uppercase mb-3">Process</p>

@@ -16,6 +16,19 @@ export async function askBot(prompt, signal) {
 }
 
 /**
+ * Ask a guest-safe question without using account context or chat history.
+ * The backend returns AUTH_REQUIRED for personal data or task requests.
+ */
+export async function askPublicBot(prompt, signal) {
+  const response = await api.post(
+    "/api/chatbot/ask-public",
+    { prompt },
+    signal ? { signal } : {}
+  );
+  return response.data;
+}
+
+/**
  * Fetch the user's persistent chat history.
  * @returns {Promise<Array<{ sender: string, text: string, createdAt: string }>>}
  */

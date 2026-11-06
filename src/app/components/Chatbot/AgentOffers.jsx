@@ -89,7 +89,7 @@ export default function AgentOffers() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex-1 space-y-4 overflow-y-auto px-5 pb-4 pt-3">
+      <div className="flex-1 space-y-4 overflow-y-auto bg-[var(--muted)] px-5 pb-4 pt-3">
         {error && (
           <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12.5px] text-amber-800 leading-relaxed">
             {error}
@@ -98,7 +98,7 @@ export default function AgentOffers() {
 
         {/* Pending proposals: approve or reject */}
         {pending.map((a) => (
-          <div key={a._id} className="rounded-2xl border border-indigo-200 bg-white p-4 shadow-sm">
+          <div key={a._id} className="rounded-2xl border border-indigo-200 bg-[var(--card)] p-4 shadow-sm">
             <div className="mb-2 flex items-center gap-2">
               <Bot className="h-4 w-4 text-indigo-500" />
               <span className="text-[13px] font-semibold text-indigo-700">
@@ -110,7 +110,7 @@ export default function AgentOffers() {
             </div>
             <p className="text-[13.5px] leading-relaxed text-slate-700">{a.summary}</p>
             {a.proposal?.message && (
-              <p className="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-[12.5px] italic text-slate-600 leading-relaxed">
+              <p className="mt-2 rounded-xl bg-[var(--secondary)] px-3 py-2 text-[12.5px] italic text-slate-600 leading-relaxed">
                 “{a.proposal.message}”
               </p>
             )}
@@ -156,7 +156,7 @@ export default function AgentOffers() {
         {/* Agent offer cards */}
         <div className="space-y-2">
           {agents.map((agent) => (
-            <div key={agent.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div key={agent.id} className="rounded-2xl border border-slate-200 bg-[var(--card)] p-4 shadow-sm">
               <div className="flex items-center justify-between gap-2">
                 <span className="flex items-center gap-2 text-[14px] font-semibold text-slate-900">
                   <Sparkles className="h-4 w-4 text-indigo-500 shrink-0" /> {agent.label}
@@ -176,7 +176,7 @@ export default function AgentOffers() {
       </div>
 
       {/* Activity log toggle */}
-      <div className="border-t border-slate-100 bg-white px-5 py-3 shrink-0">
+      <div className="border-t border-slate-100 bg-[var(--card)] px-5 py-3 shrink-0">
         <button
           onClick={() => setShowHistory((v) => !v)}
           className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-slate-500 hover:text-slate-700"

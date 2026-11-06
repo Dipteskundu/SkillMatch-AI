@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   X,
-  Search,
   Bell,
   ChevronDown,
   User,
@@ -37,7 +36,6 @@ import styles from "./Navbar.module.css";
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -235,30 +233,10 @@ export default function Navbar() {
     if (href) router.push(href);
   };
 
-  // Search handling
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const submitSearch = (q) => {
-    const term = (q || searchQuery || "").trim();
-    if (!term) return;
-    // Navigate to jobs page with search param
-    router.push(`/jobs?search=${encodeURIComponent(term)}`);
-    setSearchQuery("");
-    setSearchOpen(false);
-    setMobileOpen(false);
-  };
-
-  const onKeyDownSearch = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      submitSearch();
-    }
-  };
-
   return (
     <>
       <header
-        className={`${styles.header} ${scrolled ? styles.scrolled : ""}`}
+        className={`${styles.header} backdrop-blur-xl backdrop-saturate-150 ${scrolled ? styles.scrolled : ""}`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-[64px] lg:h-[64px]">
@@ -291,15 +269,6 @@ export default function Navbar() {
 
             {/* Right Side */}
             <div className="flex items-center gap-2 sm:gap-3 ml-auto lg:ml-0">
-              <button
-                type="button"
-                onClick={() => setSearchOpen((v) => !v)}
-                className="hidden lg:flex items-center justify-center w-9 h-9 rounded-full text-slate-500 hover:text-indigo-700 hover:bg-violet-50 transition-colors"
-                aria-label="Search jobs and skills"
-              >
-                <Search className="w-[18px] h-[18px]" />
-              </button>
-
               <button
                 type="button"
                 onClick={toggleTheme}
@@ -451,35 +420,6 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Desktop Search Popup */}
-        {searchOpen && (
-          <div className="hidden lg:block border-t border-slate-100 bg-white px-6 py-3 animate-fade-in">
-            <div className="mx-auto max-w-7xl">
-              <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus-within:border-indigo-400 transition-all">
-                <Search className="w-4 h-4 text-slate-400 shrink-0" />
-                <input
-                  autoFocus
-                  type="text"
-                  placeholder="Search jobs, companies, or skills..."
-                  className="bg-transparent text-[14px] text-slate-700 placeholder-slate-400 outline-none w-full"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={onKeyDownSearch}
-                />
-                <button
-                  onClick={() => {
-                    // close or submit depending on whether a query exists
-                    if (searchQuery.trim()) submitSearch(searchQuery);
-                    else setSearchOpen(false);
-                  }}
-                  className="text-slate-400 hover:text-slate-700"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </header>
 
       {/* Spacer */}
@@ -496,7 +436,7 @@ export default function Navbar() {
 
       {/* ── Mobile Drawer Panel ── */}
       <div
-        className={`fixed top-0 right-0 z-50 h-full w-[85vw] max-w-sm bg-white shadow-2xl flex flex-col lg:hidden transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+        className={`${styles.mobileDrawer} backdrop-blur-xl backdrop-saturate-150 fixed top-0 right-0 z-50 h-full w-[85vw] max-w-sm flex flex-col lg:hidden transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           mobileOpen ? "translate-x-0" : "translate-x-full"
         }`}
         role="dialog"
@@ -569,31 +509,6 @@ export default function Navbar() {
               </div>
             </div>
           )}
-
-          {/* Search Bar */}
-          <div className="px-5 mt-5">
-            <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus-within:border-indigo-400 focus-within:bg-white transition-all">
-              <Search className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
-              <input
-                type="text"
-                placeholder="Search jobs or skills..."
-                className="bg-transparent text-sm text-slate-700 placeholder-slate-400 outline-none w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={onKeyDownSearch}
-              />
-              {searchQuery.trim() && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="shrink-0 text-slate-300 hover:text-slate-500 transition-colors"
-                  aria-label="Clear search"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
 
           {/* Navigation Links */}
           <div className="px-5 mt-6">
