@@ -36,7 +36,7 @@ export default function StartContent() {
   const companyText = company ? ` at ${company}` : "";
 
   return (
-    <div className="min-h-screen bg-[#fdfdfe]">
+    <div className="min-h-screen theme-page">
       <Navbar />
 
       <main className="pt-32 pb-24">

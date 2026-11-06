@@ -32,6 +32,7 @@ import { useTheme } from "../../lib/ThemeContext";
 import Avatar from "../common/Avatar";
 import NotificationPanel from "../Notifications/NotificationPanel";
 import api from "../../lib/apiClient";
+import styles from "./Navbar.module.css";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -53,6 +54,14 @@ export default function Navbar() {
     return () => {
       document.body.style.overflow = "";
     };
+  }, [mobileOpen]);
+
+  // Close the mobile menu with the Escape key
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKeyDown = (e) => { if (e.key === "Escape") setMobileOpen(false); };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [mobileOpen]);
 
   useEffect(() => {
@@ -249,33 +258,29 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? "bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] border-b border-slate-100"
-            : "bg-white border-b border-slate-100"
-        }`}
+        className={`${styles.header} ${scrolled ? styles.scrolled : ""}`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-[64px] lg:h-[64px]">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-              <span className="text-[17px] font-black text-slate-900 tracking-tight">
+            <Link href="/" className="flex items-center gap-2.5 shrink-0 group" aria-label="JobMatch AI home">
+              <span className="text-[19px] font-black text-slate-900 tracking-tight sm:text-[21px]">
                 JobMatch<span className="text-indigo-600">AI</span>
               </span>
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-1 ml-8">
+            <nav aria-label="Main navigation" className="hidden lg:flex items-center gap-1 ml-auto mr-auto rounded-full border border-white/70 bg-white/55 p-1 shadow-[0_5px_22px_rgba(69,57,138,0.05)] backdrop-blur-md">
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
                 return (
                   <Link
                     key={link.name}
                     href={link.href}
-                    className={`nav-link-underline px-3 py-2 rounded-lg text-[14px] font-semibold transition-colors ${
+                    className={`px-4 py-2.5 rounded-full text-[14px] font-semibold transition-all duration-200 ${
                       isActive
-                        ? "text-indigo-600 active"
-                        : "text-slate-600 hover:text-slate-900"
+                        ? "bg-violet-100 text-indigo-700 shadow-[0_2px_8px_rgba(99,76,245,0.08)]"
+                        : "text-slate-600 hover:bg-white hover:text-indigo-700"
                     }`}
                   >
                     {link.name}
@@ -285,32 +290,49 @@ export default function Navbar() {
             </nav>
 
             {/* Right Side */}
-            <div className="flex items-center gap-3 ml-auto">
+            <div className="flex items-center gap-2 sm:gap-3 ml-auto lg:ml-0">
+              <button
+                type="button"
+                onClick={() => setSearchOpen((v) => !v)}
+                className="hidden lg:flex items-center justify-center w-9 h-9 rounded-full text-slate-500 hover:text-indigo-700 hover:bg-violet-50 transition-colors"
+                aria-label="Search jobs and skills"
+              >
+                <Search className="w-[18px] h-[18px]" />
+              </button>
+
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="flex items-center justify-center w-9 h-9 rounded-full text-slate-600 hover:text-indigo-700 hover:bg-violet-50 transition-colors"
+                aria-label="Toggle theme"
+              >
+                {mounted ? (
+                  theme === "dark" ? (
+                    <Sun className="w-[18px] h-[18px]" />
+                  ) : (
+                    <Moon className="w-[18px] h-[18px]" />
+                  )
+                ) : (
+                  <Sun className="w-[18px] h-[18px]" />
+                )}
+              </button>
+
+              {!isAuthenticated && <span className="hidden lg:block h-7 w-px bg-slate-300 mx-1" aria-hidden="true" />}
+
               {/* Logged Out */}
               {!isAuthenticated && (
                 <>
-                  <div className="hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-full px-4 py-2 hover:border-slate-300 focus-within:border-indigo-400 focus-within:bg-white transition-all w-52">
-                    <Search className="w-4 h-4 text-slate-400 shrink-0" />
-                    <input
-                      type="text"
-                      placeholder="Search jobs or skills..."
-                      className="bg-transparent text-[13px] text-slate-700 placeholder-slate-400 outline-none w-full"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={onKeyDownSearch}
-                    />
-                  </div>
                   <Link
                     href="/signin"
-                    className="hidden md:inline-flex text-[14px] font-semibold text-slate-700 hover:text-indigo-600 transition-colors px-2"
+                    className="hidden lg:inline-flex text-[14px] font-semibold text-slate-700 hover:text-indigo-600 transition-colors px-2.5"
                   >
-                    Log In
+                    Sign In
                   </Link>
                   <Link
                     href="/signup"
-                    className="hidden md:inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white text-[14px] font-semibold px-5 py-2 rounded-lg transition-colors shadow-sm active:scale-95"
+                    className="hidden lg:inline-flex items-center gap-2 rounded-full bg-[#4F39F6] px-5 py-3 text-[14px] font-semibold text-white shadow-[0_8px_20px_rgba(79,57,246,0.28)] transition-all hover:bg-[#4332EC] hover:-translate-y-0.5 hover:shadow-[0_12px_26px_rgba(79,57,246,0.35)] active:scale-95"
                   >
-                    Sign Up
+                    Get Started <span aria-hidden="true">→</span>
                   </Link>
                 </>
               )}
@@ -319,16 +341,8 @@ export default function Navbar() {
               {isAuthenticated && (
                 <>
                   <button
-                    onClick={() => setSearchOpen((v) => !v)}
-                    className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                    aria-label="Search"
-                  >
-                    <Search className="w-[18px] h-[18px]" />
-                  </button>
-
-                  <button
                     onClick={() => setNotifOpen((v) => !v)}
-                    className="hidden md:flex relative items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                    className="hidden lg:flex relative items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                     aria-label="Notifications"
                   >
                     <Bell className="w-[18px] h-[18px]" />
@@ -340,7 +354,7 @@ export default function Navbar() {
                   </button>
 
                   {/* Desktop Profile Dropdown */}
-                  <div className="relative hidden md:block" ref={profileRef}>
+                  <div className="relative hidden lg:block" ref={profileRef}>
                     <button
                       type="button"
                       onClick={() => setProfileOpen((v) => !v)}
@@ -415,27 +429,10 @@ export default function Navbar() {
                 </>
               )}
 
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="hidden md:flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                aria-label="Toggle theme"
-              >
-                {mounted ? (
-                  theme === "dark" ? (
-                    <Sun className="w-[18px] h-[18px]" />
-                  ) : (
-                    <Moon className="w-[18px] h-[18px]" />
-                  )
-                ) : (
-                  <Sun className="w-[18px] h-[18px]" />
-                )}
-              </button>
-
               {/* Mobile Hamburger */}
               <button
                 type="button"
-                className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl hover:bg-slate-100 transition-colors hover-scale btn-press"
+                className="lg:hidden flex items-center justify-center w-10 h-10 rounded-xl hover:bg-slate-100 transition-colors hover-scale btn-press"
                 onClick={() => setMobileOpen((v) => !v)}
                 aria-label="Toggle menu"
               >
@@ -443,9 +440,9 @@ export default function Navbar() {
                   <X className="h-5 w-5 text-slate-700" />
                 ) : (
                   <span className="flex flex-col gap-[5px] items-start w-5">
-                    <span className="block h-[2.5px] w-5 bg-slate-800 rounded-full" />
-                    <span className="block h-[2.5px] w-3 bg-slate-800 rounded-full" />
-                    <span className="block h-[2.5px] w-5 bg-slate-800 rounded-full" />
+                    <span className="hamburger-bar block h-[2.5px] w-5 bg-slate-800 rounded-full" />
+                    <span className="hamburger-bar block h-[2.5px] w-3 bg-slate-800 rounded-full" />
+                    <span className="hamburger-bar block h-[2.5px] w-5 bg-slate-800 rounded-full" />
                   </span>
                 )}
               </button>
@@ -455,8 +452,8 @@ export default function Navbar() {
         </div>
 
         {/* Desktop Search Popup */}
-        {isAuthenticated && searchOpen && (
-          <div className="hidden md:block border-t border-slate-100 bg-white px-6 py-3 animate-fade-in">
+        {searchOpen && (
+          <div className="hidden lg:block border-t border-slate-100 bg-white px-6 py-3 animate-fade-in">
             <div className="mx-auto max-w-7xl">
               <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus-within:border-indigo-400 transition-all">
                 <Search className="w-4 h-4 text-slate-400 shrink-0" />
@@ -488,30 +485,31 @@ export default function Navbar() {
       {/* Spacer */}
       <div className="h-16" />
 
-      {/* ── Mobile Drawer Overlay ── */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm md:hidden animate-overlay-in"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+      {/* ── Mobile Drawer Overlay — stays mounted so it fades in AND out ── */}
+      <div
+        className={`fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-md lg:hidden transition-[opacity,visibility] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+          mobileOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
+        }`}
+        onClick={() => setMobileOpen(false)}
+        aria-hidden="true"
+      />
 
       {/* ── Mobile Drawer Panel ── */}
       <div
-        className={`fixed top-0 right-0 z-50 h-full w-[85vw] max-w-sm bg-white shadow-2xl flex flex-col md:hidden transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 z-50 h-full w-[85vw] max-w-sm bg-white shadow-2xl flex flex-col lg:hidden transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
           mobileOpen ? "translate-x-0" : "translate-x-full"
         }`}
+        role="dialog"
+        aria-modal="true"
+        aria-hidden={!mobileOpen}
       >
         {/* Drawer Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 animate-slide-down">
-          <Link
-            href="/"
-            onClick={() => setMobileOpen(false)}
-            className="text-[17px] font-black text-slate-900 tracking-tight hover-scale"
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div
+            className="text-[15px] font-black text-slate-900 uppercase tracking-[0.25em]"
           >
-            <span className="text-indigo-600"></span>
-          </Link>
+            Menu
+          </div>
           <button
             onClick={() => setMobileOpen(false)}
             className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors hover-scale btn-press"
@@ -525,7 +523,7 @@ export default function Navbar() {
         <div className="flex-1 overflow-y-auto">
           {/* User Profile Card (logged in) */}
           {isAuthenticated && (
-            <div className="mx-4 mt-4 p-4 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl text-white animate-card-rise stagger-1">
+            <div className={`mx-4 mt-4 p-4 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl text-white ${mobileOpen ? "animate-card-rise stagger-1" : ""}`}>
               <div className="flex items-center gap-3 mb-3">
                 <Avatar
                   src={user?.photoURL}
@@ -573,39 +571,32 @@ export default function Navbar() {
           )}
 
           {/* Search Bar */}
-          <div className="px-4 mt-4">
+          <div className="px-5 mt-5">
             <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus-within:border-indigo-400 focus-within:bg-white transition-all">
-              <Search className="w-4 h-4 text-slate-400 shrink-0" />
+              <Search className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
               <input
                 type="text"
                 placeholder="Search jobs or skills..."
                 className="bg-transparent text-sm text-slate-700 placeholder-slate-400 outline-none w-full"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={onKeyDownSearch}
               />
+              {searchQuery.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="shrink-0 text-slate-300 hover:text-slate-500 transition-colors"
+                  aria-label="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           </div>
 
-          <div className="px-4 mt-4">
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-slate-700 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors"
-              aria-label="Toggle theme"
-            >
-              {mounted ? (
-                theme === "dark" ? (
-                  <Sun className="w-4 h-4" />
-                ) : (
-                  <Moon className="w-4 h-4" />
-                )
-              ) : (
-                <Sun className="w-4 h-4" />
-              )}
-              <span>{mounted && theme === "dark" ? "Light mode" : "Dark mode"}</span>
-            </button>
-          </div>
-
           {/* Navigation Links */}
-          <div className="px-4 mt-5">
+          <div className="px-5 mt-6">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
               Navigation
             </p>
@@ -617,7 +608,7 @@ export default function Navbar() {
                     key={name}
                     href={href}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-3 rounded-xl text-[14px] font-semibold transition-all hover-lift animate-stagger-item stagger-${Math.min(index + 1, 8)} ${
+                    className={`flex items-center gap-3 px-3 py-3 rounded-xl text-[14px] font-semibold transition-all hover-lift ${mobileOpen ? `animate-stagger-item stagger-${Math.min(index + 1, 8)}` : ""} ${
                       isActive
                         ? "bg-indigo-50 text-indigo-600"
                         : "text-slate-700 hover:bg-slate-50"
@@ -631,9 +622,11 @@ export default function Navbar() {
                       />
                     </span>
                     {name}
-                    {isActive && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pop-in" />
-                    )}
+                    <ChevronRight
+                      className={`ml-auto w-4 h-4 shrink-0 animate-pop-in ${
+                        isActive ? "text-indigo-600" : "text-slate-300"
+                      }`}
+                    />
                   </Link>
                 );
               })}
@@ -642,7 +635,7 @@ export default function Navbar() {
 
           {/* Logged Out CTAs */}
           {!isAuthenticated && (
-            <div className="px-4 mt-5 flex flex-col gap-3">
+            <div className="px-5 mt-6 flex flex-col gap-3">
               <Link
                 href="/signup"
                 onClick={() => setMobileOpen(false)}
@@ -657,6 +650,9 @@ export default function Navbar() {
               >
                 Log In
               </Link>
+              <p className="text-center text-[11px] font-semibold text-slate-400">
+                Free to join · No credit card required
+              </p>
             </div>
           )}
 
@@ -666,7 +662,7 @@ export default function Navbar() {
 
         {/* Drawer Footer (logged in) */}
         {isAuthenticated && (
-          <div className="px-4 py-4 border-t border-slate-100 animate-slide-up-fade">
+          <div className="px-5 py-4 border-t border-slate-100">
             <button
               type="button"
               onClick={async () => {
@@ -674,7 +670,7 @@ export default function Navbar() {
                 await logout();
                 router.push("/");
               }}
-              className="w-full flex items-center justify-center gap-2.5 py-3 text-[14px] font-bold text-red-500 bg-red-50 hover:bg-red-100 rounded-2xl transition-colors btn-press hover-scale"
+              className="w-full flex items-center justify-center gap-2.5 py-3 text-[14px] font-bold text-red-500 bg-red-50 hover:bg-red-100 rounded-2xl transition-colors btn-press active:scale-[0.98]"
             >
               <LogOut className="w-4 h-4" />
               Log Out

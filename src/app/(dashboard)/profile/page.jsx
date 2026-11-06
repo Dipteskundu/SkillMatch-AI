@@ -22,7 +22,7 @@ export default function ProfilePage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#f4f6fb] flex items-center justify-center">
+      <div className="min-h-screen theme-page-muted flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -30,7 +30,7 @@ export default function ProfilePage() {
 
   if (!profile && !authLoading) {
     return (
-        <div className="min-h-screen bg-[#f4f6fb] flex flex-col items-center justify-center p-4">
+        <div className="min-h-screen theme-page-muted flex flex-col items-center justify-center p-4">
              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                 <Briefcase className="w-8 h-8 text-slate-300" />
             </div>
@@ -61,7 +61,7 @@ export default function ProfilePage() {
   ].filter((s) => s.url);
 
   return (
-    <div className="min-h-screen bg-[#f4f6fb]">
+    <div className="min-h-screen theme-page-muted">
       {/* Hero Header */}
       <div className="px-4 sm:px-6 pt-6">
         <div className="relative bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 overflow-hidden rounded-3xl shadow-xl shadow-indigo-200/40">

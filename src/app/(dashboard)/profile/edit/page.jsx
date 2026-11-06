@@ -139,11 +139,11 @@ export default function EditProfilePage() {
   };
 
   if (authLoading || fetching) {
-    return <div className="min-h-screen bg-[#f4f6fb] flex items-center justify-center"><Loader2 className="w-10 h-10 text-indigo-600 animate-spin" /></div>;
+    return <div className="min-h-screen theme-page-muted flex items-center justify-center"><Loader2 className="w-10 h-10 text-indigo-600 animate-spin" /></div>;
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f6fb]">
+    <div className="min-h-screen theme-page-muted">
       <div className="max-w-2xl mx-auto px-4 py-8">
         {/* Page Header */}
         <div className="mb-6">
@@ -406,7 +406,7 @@ export default function EditProfilePage() {
           )}
 
           {/* Sticky Footer */}
-          <div className="sticky bottom-0 left-0 right-0 mt-6 bg-[#f4f6fb] pt-3 pb-4 flex gap-3">
+          <div className="sticky bottom-0 left-0 right-0 mt-6 theme-page-muted pt-3 pb-4 flex gap-3">
             <button type="submit" disabled={updating} className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-200 disabled:opacity-50">
               {updating ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-5 h-5" /> Save Changes</>}
             </button>

@@ -32,7 +32,7 @@ export default function PublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f4f6fb] flex items-center justify-center">
+      <div className="min-h-screen theme-page-muted flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -40,7 +40,7 @@ export default function PublicProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[#f4f6fb] flex items-center justify-center">
+      <div className="min-h-screen theme-page-muted flex items-center justify-center">
         <div className="text-center">
           <p className="text-slate-500 mb-4">Profile not found.</p>
           <button onClick={() => router.back()} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700">Go Back</button>
@@ -70,7 +70,7 @@ export default function PublicProfilePage() {
   ].filter(s => s.url);
 
   return (
-    <div className="min-h-screen bg-[#f4f6fb]">
+    <div className="min-h-screen theme-page-muted">
       {/* Back button */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-4">
         <button onClick={() => router.back()}

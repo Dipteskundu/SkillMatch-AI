@@ -113,7 +113,7 @@ export default function JobDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fdfdfe]">
+    <div className="min-h-screen theme-page">
       <Navbar />
 
       <main className="pt-8 pb-24">

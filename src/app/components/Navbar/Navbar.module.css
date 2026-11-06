@@ -1,0 +1,51 @@
+.header {
+  position: fixed;
+  z-index: 50;
+  inset: 0 0 auto;
+  border-bottom: 1px solid transparent;
+  background: rgba(255, 255, 255, .9);
+  color: #172033;
+  backdrop-filter: blur(18px);
+  transition: background .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+
+.scrolled {
+  border-bottom-color: rgba(226, 229, 240, .8);
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 8px 32px rgba(45, 35, 110, .08);
+}
+
+.header :global(.text-slate-900),
+.header :global(.text-slate-800),
+.header :global(.text-slate-700) { color: #172033; }
+
+.header :global(.text-slate-600),
+.header :global(.text-slate-500) { color: #596276; }
+
+.header :global(.text-slate-400) { color: #8991a3; }
+
+:global(html.dark) .header,
+:global(html.dark) .scrolled {
+  border-bottom-color: rgba(148, 163, 184, .16);
+  background: rgba(8, 12, 24, .9);
+  color: #e5e7eb;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, .24);
+}
+
+:global(html.dark) .header :global(nav) {
+  border-color: rgba(148, 163, 184, .2);
+  background: rgba(20, 27, 46, .72);
+  box-shadow: 0 5px 22px rgba(0, 0, 0, .16);
+}
+
+:global(html.dark) .header :global(nav a[aria-current="page"]),
+:global(html.dark) .header :global(nav a.bg-violet-100) {
+  background: rgba(99, 80, 232, .25);
+  color: #c4baff;
+}
+
+:global(html.dark) .header :global(nav a:hover) { background: rgba(99, 80, 232, .16); }
+
+:global(html.dark) .header :global(.bg-red-50) { background-color: rgba(244, 63, 94, .12) !important; }
+
+:global(html.dark) .header :global(input) { color: #e5e7eb; }

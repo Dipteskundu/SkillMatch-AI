@@ -7,7 +7,7 @@ export default function GrowthFeedbackCard({ feedback, jobTitle, company }) {
     if (!feedback || !feedback.missingSkills?.length) return null;
 
     return (
-        <div className="bg-gradient-to-br from-[#fef3c7] via-[#fff7ed] to-white border border-amber-200 rounded-[2rem] p-7 shadow-sm">
+        <div className="theme-feedback-card border border-amber-200 rounded-[2rem] p-7 shadow-sm">
             {/* Header */}
             <div className="flex items-start gap-4 mb-6">
                 <div className="p-3 bg-amber-100 rounded-2xl shrink-0">

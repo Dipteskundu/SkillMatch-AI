@@ -57,7 +57,7 @@ export default function PostJobPage() {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-[#f4f6fb]">
+    <div className="min-h-screen theme-page-muted">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         {/* Header */}
         <div className="mb-6">

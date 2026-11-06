@@ -8,7 +8,7 @@ import PageWrapper from "../components/common/PageWrapper";
 
 export default function AboutPage() {
     return (
-        <div className="min-h-screen bg-[#fdfdfe]">
+        <div className="min-h-screen theme-page">
             <Navbar />
 
             <main className="pt-8 sm:pt-12 pb-24">

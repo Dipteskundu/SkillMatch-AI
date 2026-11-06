@@ -23,7 +23,7 @@ import PageWrapper from "../components/common/PageWrapper";
 import { API_BASE, apiFetch } from "../lib/apiClient";
 
 export default function SkillGapDetectionPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
   const apiBase = API_BASE;
 
@@ -36,10 +36,10 @@ export default function SkillGapDetectionPage() {
 
   // Auth guard
   useEffect(() => {
-    if (isAuthenticated === false && user === null) {
+    if (!authLoading && isAuthenticated === false && user === null) {
       router.push("/signin");
     }
-  }, [isAuthenticated, user, router]);
+  }, [authLoading, isAuthenticated, user, router]);
 
   // Fetch all jobs
   useEffect(() => {
@@ -92,7 +92,7 @@ export default function SkillGapDetectionPage() {
   /* ── Loading skeleton ── */
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fdfdfe] flex flex-col">
+      <div className="min-h-screen theme-page flex flex-col">
         <Navbar />
         <main className="flex-1 flex flex-col items-center justify-center py-24 gap-4">
           <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
@@ -106,7 +106,7 @@ export default function SkillGapDetectionPage() {
   /* ── Error state ── */
   if (error) {
     return (
-      <div className="min-h-screen bg-[#fdfdfe] flex flex-col">
+      <div className="min-h-screen theme-page flex flex-col">
         <Navbar />
         <main className="flex-1 flex flex-col items-center justify-center py-24 gap-4 px-4">
           <AlertTriangle className="w-12 h-12 text-red-400" />
@@ -124,7 +124,7 @@ export default function SkillGapDetectionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fdfdfe] flex flex-col font-sans">
+    <div className="min-h-screen theme-page flex flex-col font-sans">
       <Navbar />
 
       {/* ── Hero Banner ── */}

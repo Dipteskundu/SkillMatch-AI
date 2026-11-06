@@ -111,7 +111,7 @@ export default function SkillGapAnalysisPage({ params }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fdfdfe] flex flex-col">
+      <div className="min-h-screen theme-page flex flex-col">
         <Navbar />
         <main className="flex-1 flex flex-col items-center justify-center py-20">
           <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
@@ -130,7 +130,7 @@ export default function SkillGapAnalysisPage({ params }) {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#fdfdfe] flex flex-col">
+      <div className="min-h-screen theme-page flex flex-col">
         <Navbar />
         <main className="flex-1 flex flex-col items-center pt-20 pb-24 px-4">
           <AlertTriangle className="w-16 h-16 text-red-500 mb-6" />
@@ -151,7 +151,7 @@ export default function SkillGapAnalysisPage({ params }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#fdfdfe] flex flex-col font-sans">
+    <div className="min-h-screen theme-page flex flex-col font-sans">
       <Navbar />
 
       <main className="flex-1 pt-12 pb-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">

@@ -420,7 +420,7 @@ export default function InterviewsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#fcfcfd]">
+    <div className="min-h-screen theme-page">
       {role === "recruiter" ? (
         <PipelineLayout activePhase="scheduled">
           {content}

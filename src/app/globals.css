@@ -64,6 +64,58 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Use semantic page surfaces so route backgrounds follow the active theme. */
+.theme-page {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.theme-page-muted {
+  background-color: var(--muted);
+  color: var(--foreground);
+}
+
+/* Homepage sections sit above decorative visuals and use theme token surfaces. */
+.home-trusted-section {
+  --home-trusted-surface: color-mix(in srgb, var(--muted) 60%, var(--background));
+  position: relative;
+  z-index: 2;
+  background-color: var(--home-trusted-surface);
+  border-color: var(--border);
+}
+
+.home-theme-section {
+  position: relative;
+  z-index: 2;
+  background-color: var(--muted);
+  color: var(--foreground);
+}
+
+.home-marquee-fade-left {
+  background-image: linear-gradient(to right, var(--home-trusted-surface), transparent);
+}
+
+.home-marquee-fade-right {
+  background-image: linear-gradient(to left, var(--home-trusted-surface), transparent);
+}
+
+.theme-feedback-card {
+  background: linear-gradient(135deg, #fef3c7 0%, #fff7ed 58%, #ffffff 100%);
+}
+html.dark .theme-feedback-card {
+  background: linear-gradient(135deg, rgba(120, 53, 15, 0.34) 0%, rgba(124, 45, 18, 0.24) 58%, var(--card) 100%);
+  border-color: rgba(251, 191, 36, 0.28) !important;
+}
+html.dark .theme-feedback-card .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.18) !important;
+}
+html.dark .theme-feedback-card .border-red-200 {
+  border-color: rgba(248, 113, 113, 0.32) !important;
+}
+html.dark .theme-feedback-card .text-red-600 {
+  color: #f87171 !important;
+}
+
 /* â”€â”€ Dark mode coverage (utility overrides) â”€â”€ */
 html.dark .bg-white { background-color: var(--card) !important; }
 html.dark .bg-slate-50 { background-color: var(--background) !important; }
@@ -418,7 +470,7 @@ html.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
   animation: blob-float 12s ease-in-out infinite 3s;
 }
 .animate-marquee {
-  animation: marquee 28s linear infinite;
+  animation: marquee 14s linear infinite;
 }
 .animate-ping-slow {
   animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
@@ -995,4 +1047,23 @@ html.dark .rbc-current-time-indicator { background: var(--ring); }
   .rbc-event { font-size: 10px !important; }
   .rbc-show-more { font-size: 10px; }
   .rbc-agenda-date-cell, .rbc-agenda-time-cell { padding: 6px 8px; font-size: 11px; }
+}
+
+/* Respect users who prefer reduced motion — skip decorative animations */
+@media (prefers-reduced-motion: reduce) {
+  .animate-overlay-in,
+  .animate-drawer-in-right,
+  .animate-drawer-in-left,
+  .animate-slide-down,
+  .animate-slide-up-fade,
+  .animate-card-rise,
+  .animate-stagger-item,
+  .animate-pop-in {
+    animation: none !important;
+  }
+}
+
+/* Mobile hamburger: bars use bg-slate-800, which has no dark remap — make them light in dark mode */
+html.dark .hamburger-bar {
+  background-color: var(--foreground) !important;
 }

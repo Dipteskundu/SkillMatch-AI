@@ -85,7 +85,7 @@ export default function TestContent() {
 
   if (authLoading || starting) {
     return (
-      <div className="min-h-screen bg-[#fdfdfe] flex items-center justify-center">
+      <div className="min-h-screen theme-page flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -93,7 +93,7 @@ export default function TestContent() {
 
   if (!sessionId) {
     return (
-      <div className="min-h-screen bg-[#fdfdfe]">
+      <div className="min-h-screen theme-page">
         <Navbar />
         <main className="pt-32 pb-24">
           <div className="container mx-auto px-6 lg:px-24 max-w-xl text-center">
@@ -116,7 +116,7 @@ export default function TestContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fdfdfe]">
+    <div className="min-h-screen theme-page">
       <Navbar />
 
       <main className="pt-32 pb-24">
